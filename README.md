@@ -7,6 +7,7 @@ uARM (based on my earlier project with the same name) is an ARM device emulator.
  * miserable-at-best performance on top-of-the-line modern hardware
  * questionable-at-best accuracy
  * somewhat comprehensible code
+ * hacky-at-best quality
  * contains a kind-of-cool virtual SD card emulator
  
  ### Why it is
