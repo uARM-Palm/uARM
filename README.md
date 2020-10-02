@@ -93,3 +93,27 @@ Examples:
     ./uARM -n TX.NOR.bin -n TX.NAND.bin                   # Boot T|X
     ./uARM -n TE2.NOR.bin -n TE2.NAND.bin -s sdcard.img   # Boot T|E with an sd card
 ```
+
+### Tested images
+```
+c145a13492de792538e3a3e11d1bfdeb3055e097ae0aafdb775760dcd2d819a3  AceecaPDA32.NAND.bin
+95efc73fc8bb952eba86c8517ffd50ce025f9666ba94778cff59907802fd90f3  AximX3.NOR.bin
+e6adb4efc3a6a5c5d2c110fad315ffa2a5f8c20d415e4b5a9b0eb39c181d7b5a  PalmTungstenC.NOR.bin
+31bcdb9d48f45694ea316a3a51c0a7c43e0c46178cbb7c02a1fee07038e4acab  PalmTungstenE-fastboot.NOR.bin
+419a61d5522cbebbc4d36c30a77ebd61af3720863e49c192939f516160513ef9  PalmTungstenE.NOR.bin
+49d4008780831a4c024a9ead2f07adfb81f113cfcea248c51c49652fb0da3389  PalmTungstenT3-Cobalt.NOR.bin
+4fb7d5abf5aa561b8cf16eab53104ef5500f0e8f13256dc17fde4a2cfab12568  PalmTungstenT3-OS5-fastboot.NOR.bin
+118a324bbee341f1d3f704c7a10f61176ef8c2915a63489144776dbc8d9f1330  PalmTungstenT3-OS5.NOR.bin
+6213b4f2fb1e92640ba29444fdf70a6a803932fda0a4b3c3824d5eb3af731ec0  PalmTX.NAND.bin
+deab283c926d1f68d599b0f42bab7d84d2ff7dd7bb8ae41ec0dc381e6d7db530  PalmTX.NOR.bin.bin
+14233cf431ba5c7ebbef57cd089ecde663d06b703e98115caa340b5bd65f76c1  PalmZ22.NAND.bin
+3d2fe487662d438c60d4c83394337a49a570240b26cdf36ac114f17ceffdf0f7  PalmZire21.NOR.bin
+35cb5dc218065886f0067b89daf3f09e7119a924410ff0157eac0591af26f215  PalmZire72-fastboot.NOR.bin.bin
+f44dd41217682740b86714e77b5ca0ef41b1d0bed18361e80bcc833a40f6659b  PalmZire72.NOR.bin
+16e22608d48a090857c93d264b5c80bcafc01c66bbd55679b1cfcda0cac673eb  PalmZireXYZ-fastboot.NOR.bin
+12c2aa9a1ffdcfc40bf45896173aaa84b3a49d323ae25ccfaf11550c898847b8  PalmZireXYZ.NOR.bin
+85e49365f4ddafe925edcc0cedf9e80cdc965fb5d352f1fce51b3581b820eff1  PalmZireZire31.NOR.bin
+c6d5985cf183bae970e711430e51ae491088a5c173df555b9177e69ac860b94f  SonyTG50.NOR.bin
+c67c54253013c08ea57e1c06c82a3209800c8b120e1be443300a39060c50c1ff  TungstenE2.NAND.bin
+9537b1caa0d657e376cb68a4056f45057b41e09140c24873e7cf0fa781752c71  TungstenE2.NOR.bin
+```
