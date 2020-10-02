@@ -81,11 +81,11 @@ Every build will support only one device type
 
 ### Running
 A few command line options exist:
- * **-r <ROMFILE>** *Provide a NOR boot rom. This is the OS image. Required, unless you supply the "-x" paremeter*
- * **-x** *Tells the amulator that no boot rom exists (S3C24xx can boot directly form NAND, for example)*
+ * **-r <ROMFILE>** *Provide a NOR boot ROM. This is the OS image. Required, unless you supply the "-x" parameter*
+ * **-x** *Tells the emulator that no NOR ROM exists (S3C24xx can boot directly from NAND, for example)*
  * **-n <NANDFILE>** *Provide a file for the initial state of the NAND flash. Required for devices that have NAND. You file needs to be of the proper size!*
  * **-s <SDCARDIMAGE>** *Provide an sdcard image. This is mutable (emulator can write to it). Cards under 2GB will appear as SD, larger as SDHC*
- * **-g <PORTNUMBER>** *Expect gdb to connect to a given port for debugging. Halt until it connects. the built-in GBD stub is quite good, supporting watchpoints, breakpoints, etc*
+ * **-g <PORTNUMBER>** *Expect gdb to connect to a given port for debugging. Halt until it connects. The built-in GBD stub is quite good, supporting watchpoints, breakpoints, etc*
 
 Examples:
 ```
