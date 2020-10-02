@@ -60,7 +60,7 @@ S3C2440		+= $(S3C24XX) s3c2440_NAND.o
 #DEVICE		+= $(PXA2XX) deviceSonyTG50.o mmiodev_TG50uc.o sspdev_AD7873.o mmiodev_MemoryStickController.o i2cdev_AN32502A.o i2sdev_AK4534.o
 #DEVICE		+= $(OMAP) devicePalmZire21.o uwiredev_ADS7846.o
 #DEVICE		+= $(OMAP) devicePalmZire71.o uwiredev_ADS7846.o
-#DEVICE		+= $(S3C2410) devicePalmZ22.o nand.o
+DEVICE		+= $(S3C2410) devicePalmZ22.o nand.o
 
 
 
