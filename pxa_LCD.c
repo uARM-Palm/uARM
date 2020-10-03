@@ -62,7 +62,7 @@ static bool pxaLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;		//we do not support non-word accesses
 	}
 	
@@ -271,7 +271,7 @@ static uint32_t pxaLcdPrvGetWord(struct PxaLcd *lcd, uint32_t addr)
 
 static void pxaLcdPrvDma(struct PxaLcd *lcd, void* dest, uint32_t addr, int32_t len)
 {
-	uint8_t* d = dest;
+	uint8_t *d = (uint8_t*)dest;
 	uint32_t t;
 
 	//we assume aligntment here both on part of dest and of addr
@@ -310,7 +310,7 @@ static void pxaLcdPrvScreenDataPixel(struct PxaLcd *lcd, uint8_t* buf)
 		if (lcd->hardGrafArea)
 			winH += 3 * w / 8;
 		
-		fprintf(stderr, "SCREEN configured for %u x %u\n", w, h);
+		fprintf(stderr, "SCREEN configured for %u x %u\n", (unsigned)w, (unsigned)h);
 		mWindow = SDL_CreateWindow("uARM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, winH, 0);
 		if (mWindow == NULL) {
 			printf("Couldn't create window: %s\n", SDL_GetError());
@@ -361,7 +361,7 @@ static void pxaLcdPrvScreenDataDma(struct PxaLcd *lcd, uint32_t addr/*PA*/, uint
 					for (j = 0; j < 8; j++) {
 					
 						ptr = lcd->palette + ((data[i] >> j) & 1) * 2;
-						pxaLcdPrvScreenDataPixel(lcd, ptr);
+						pxaLcdPrvScreenDataPixel(lcd, (uint8_t*)ptr);
 					}
 				}
 				break;
@@ -372,7 +372,7 @@ static void pxaLcdPrvScreenDataDma(struct PxaLcd *lcd, uint32_t addr/*PA*/, uint
 					for (j = 0; j < 8; j += 2) {
 					
 						ptr = lcd->palette + ((data[i] >> j) & 3) * 2;
-						pxaLcdPrvScreenDataPixel(lcd, ptr);
+						pxaLcdPrvScreenDataPixel(lcd, (uint8_t*)ptr);
 					}
 				}
 				break;
@@ -383,7 +383,7 @@ static void pxaLcdPrvScreenDataDma(struct PxaLcd *lcd, uint32_t addr/*PA*/, uint
 					for (j = 0; j < 8; j += 4) {
 					
 						ptr = lcd->palette + ((data[i] >> j) & 15) * 2;
-						pxaLcdPrvScreenDataPixel(lcd, ptr);
+						pxaLcdPrvScreenDataPixel(lcd, (uint8_t*)ptr);
 					}
 				}
 				break;
@@ -393,7 +393,7 @@ static void pxaLcdPrvScreenDataDma(struct PxaLcd *lcd, uint32_t addr/*PA*/, uint
 				for (i = 0; i < 4; i++) {
 					
 					ptr = lcd->palette + (data[i] * 2);
-					pxaLcdPrvScreenDataPixel(lcd, ptr);
+					pxaLcdPrvScreenDataPixel(lcd, (uint8_t*)ptr);
 				}
 				break;
 			

@@ -31,6 +31,7 @@
 #include "device.h"
 #include "keys.h"
 #include "vSD.h"
+#include <string.h>
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 #include "util.h"
@@ -172,9 +173,9 @@ static void socUartPrvWrite(uint_fast16_t chr, void* userData)
 
 struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t romNumPieces, uint32_t sdNumSectors, SdSectorR sdR, SdSectorW sdW, FILE *nandFile, int gdbPort, uint_fast8_t socRev)
 {
-	struct SoC *soc = malloc(sizeof(struct SoC));
+	struct SoC *soc = (struct SoC*)malloc(sizeof(struct SoC));
 	struct SocPeriphs sp;
-	void *ramBuffer;
+	uint32_t *ramBuffer;
 	uint32_t i;
 	
 	memset(soc, 0, sizeof(*soc));
@@ -187,7 +188,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->cpu)
 		ERR("Cannot init CPU");
 	
-	ramBuffer = malloc(SRAM_SIZE);
+	ramBuffer = (uint32_t*)malloc(SRAM_SIZE);
 	if (!ramBuffer)
 		ERR("cannot alloc SRAM space\n");
 	
@@ -195,7 +196,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if(!soc->sram)
 		ERR("Cannot init SRAM");
 	
-	ramBuffer = malloc(deviceGetRamSize());
+	ramBuffer = (uint32_t*)malloc(deviceGetRamSize());
 	if (!ramBuffer)
 		ERR("cannot alloc RAM space\n");
 	
@@ -258,7 +259,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 		
 		soc->tmr[i] = omapTmrInit(soc->mem, soc->ic, soc->misc, OMAP_TMRS_BASE + OMAP_TMRS_INCREMENT * i, irqs[i]);
 		if (!soc->tmr[i])
-			ERR("Cannot init OMAP's TMR%u", i + 1);
+			ERR("Cannot init OMAP's TMR%u", (unsigned)(i + 1));
 	}
 	
 	for (i = 0; i < 3; i++) {
@@ -269,7 +270,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 		
 		soc->mcbsp[i] = omapMcBspInit(soc->mem, soc->ic, soc->dma, bases[i], irqs[i], irqs[i] + 1, dmas[i], dmas[i] + 1);
 		if (!soc->mcbsp[i])
-			ERR("Cannot init OMAP's McBSP%u", i + 1);
+			ERR("Cannot init OMAP's McBSP%u", (unsigned)(i + 1));
 	}
 
 	soc->tmr32k = omap32kTmrInit(soc->mem, soc->ic);

@@ -153,7 +153,7 @@ struct stub {
 			}
 			
 			if (stub->pktBufUsed == stub->pktBufSz) {
-				stub->pktBuf = realloc(stub->pktBuf, stub->pktBufSz = stub->pktBufSz * 3 / 2 + 1);
+				stub->pktBuf = (char*)realloc(stub->pktBuf, stub->pktBufSz = stub->pktBufSz * 3 / 2 + 1);
 				
 				if (!stub->pktBuf)
 					ERR("cannot realloc stub rx buffer\n");
@@ -214,7 +214,7 @@ struct stub {
 		}
 	}
 	
-	static bool gdbStubPrvWpOp(struct stub *stub, bool set, uint32_t addr, uint32_t size, bool forWrite, bool forRead)
+	static bool gdbStubPrvWpOp(struct stub *stub, bool set, uint32_t addr, uint_fast8_t size, bool forWrite, bool forRead)
 	{
 		unsigned i;
 		
@@ -223,8 +223,8 @@ struct stub {
 			struct wp wp = {
 				.addr = addr,
 				.size = size,
-				.read = forRead ? 1 : 0,
-				.write = forWrite ? 1 : 0,
+				.read = (uint8_t)(forRead ? 1 : 0),
+				.write = (uint8_t)(forWrite ? 1 : 0),
 			};
 			
 			if (size != wp.size)	//verify size fits
@@ -267,11 +267,11 @@ struct stub {
 	static bool gdbStubPrvAddRegToStr(struct stub *stub, char *out, uint32_t regNo)
 	{
 		if (regNo < 15)			//normal regs
-			sprintf(out + strlen(out), "%08x", __builtin_bswap32(cpuGetRegExternal(stub->cpu, regNo)));
+			sprintf(out + strlen(out), "%08lx", (unsigned long)__builtin_bswap32(cpuGetRegExternal(stub->cpu, regNo)));
 		else if (regNo == 15)	//PC
-			sprintf(out + strlen(out), "%08x", __builtin_bswap32(cpuGetRegExternal(stub->cpu, regNo) &~ 1));
+			sprintf(out + strlen(out), "%08lx", (unsigned long)__builtin_bswap32(cpuGetRegExternal(stub->cpu, regNo) &~ 1));
 		else if (regNo == 0x19)		//CPSR
-			sprintf(out + strlen(out), "%08x", __builtin_bswap32(cpuGetRegExternal(stub->cpu, ARM_REG_NUM_CPSR)));
+			sprintf(out + strlen(out), "%08lx", (unsigned long)__builtin_bswap32(cpuGetRegExternal(stub->cpu, ARM_REG_NUM_CPSR)));
 		else if (regNo < 0x18)		//FP regs
 			strcat(out, "000000000000000000000000");
 		else if (regNo == 0x18)		//FP status
@@ -733,7 +733,7 @@ void gdbStubReportMemAccess(struct stub *stub, uint32_t addr, uint_fast8_t sz, b
 		//command handling loop to end, and us to "Step" to next instr start, thus acting
 		//like GDB on other platfrms - stoppping n inst just after the access
 		
-		sprintf(stub->stopReason, "T05%swatch:%08x;", stub->wp[idx].read ? (stub->wp[idx].write ? "a" : "r") : "", stub->wp[idx].addr);
+		sprintf(stub->stopReason, "T05%swatch:%08lx;", stub->wp[idx].read ? (stub->wp[idx].write ? "a" : "r") : "", (unsigned long)stub->wp[idx].addr);
 		stub->runState = RunStateStopped;
 		gdbStubPrvSendPacket(stub, stub->stopReason, false);
 		gdbStubPrvGetAndHandleCommands(stub);
@@ -788,7 +788,7 @@ struct stub* gdbStubInit(struct ArmCpu *cpu, int port)
 			stub->sock = ret;
 			
 			stub->pktBufSz = 4096;
-			stub->pktBuf = malloc(stub->pktBufSz);
+			stub->pktBuf = (char*)malloc(stub->pktBufSz);
 			if (!stub->pktBuf)
 				ERR("Command buffer alloc error");
 			

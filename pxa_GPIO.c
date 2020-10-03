@@ -115,7 +115,7 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	if (write) {
 		
 		if (size != 4) {
-			fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+			fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 			return false;		//we do not support non-word accesses
 		}
 	
@@ -368,12 +368,12 @@ enum SocGpioState socGpioGetState(struct SocGpio *gpio, uint_fast8_t gpioNum)
 	if (gpio->socRev == 1 && gpioNum > 85) {		//AFRS work a bit different here
 		
 		if (afr != 1)
-			return afr + SocGpioStateAFR0;
+			return (enum SocGpioState)(afr + SocGpioStateAFR0);
 	}
 	else {
 		
 		if (afr != 0)
-			return afr + SocGpioStateAFR0;
+			return (enum SocGpioState)(afr + SocGpioStateAFR0);
 	}
 	
 	if (gpio->dirs[sSet] & sV)

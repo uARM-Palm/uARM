@@ -42,6 +42,7 @@
 #include "device.h"
 #include "keys.h"
 #include "vSD.h"
+#include <string.h>
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 #include "util.h"
@@ -135,9 +136,9 @@ static void socUartPrvWrite(uint_fast16_t chr, void* userData)
 
 struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t romNumPieces, uint32_t sdNumSectors, SdSectorR sdR, SdSectorW sdW, FILE *nandFile, int gdbPort, uint_fast8_t socRev)
 {
-	struct SoC *soc = malloc(sizeof(struct SoC));
+	struct SoC *soc = (struct SoC*)malloc(sizeof(struct SoC));
 	struct SocPeriphs sp = {};
-	void *ramBuffer;
+	uint32_t *ramBuffer;
 	
 	memset(soc, 0, sizeof(*soc));
 	
@@ -149,7 +150,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->cpu)
 		ERR("Cannot init CPU");
 	
-	ramBuffer = malloc(deviceGetRamSize());
+	ramBuffer = (uint32_t*)malloc(deviceGetRamSize());
 	if (!ramBuffer)
 		ERR("cannot alloc RAM space\n");
 	
@@ -194,7 +195,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 			ERR("Cannot init PXA270's KPC");
 		
 		//SRAM
-		ramBuffer = malloc(SRAM_SIZE);
+		ramBuffer = (uint32_t*)malloc(SRAM_SIZE);
 		if (!ramBuffer)
 			ERR("cannot alloc SRAM space\n");
 		

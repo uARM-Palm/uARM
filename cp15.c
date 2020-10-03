@@ -87,7 +87,7 @@ static bool cp15prvCoprocRegXferFunc(struct ArmCpu* cpu, void* userData, bool tw
 				
 					tmp = val ^ cp15->control;		//see what changed and mask off then chack for what we support changing of
 					if (tmp & 0x84F0UL) {
-						fprintf(stderr, "cp15: unknown bits changed (0x%08lx) 0x%08x -> 0x%08x, halting\n", tmp & 0x84F0UL, cp15->control, origVal);
+						fprintf(stderr, "cp15: unknown bits changed (0x%08lx) 0x%08lx -> 0x%08lx, halting\n", (unsigned long)(tmp & 0x84F0UL), (unsigned long)cp15->control, (unsigned long)origVal);
 						while (true);
 					}
 					
@@ -230,7 +230,7 @@ static bool cp15prvCoprocRegXferFunc(struct ArmCpu* cpu, void* userData, bool tw
 		
 		case 9:		//cache lockdown
 			if (CRm == 1 && op2 == 0)
-				fprintf(stderr, "Attempt to lock 0x%08x+32 in icache\r\n", val);
+				fprintf(stderr, "Attempt to lock 0x%08lx+32 in icache\r\n", (unsigned long)val);
 			else if (CRm == 2 && op2 == 0)
 				fprintf(stderr, "Dcache now %s lock mode\r\n", val ? "in" : "out of");
 			else

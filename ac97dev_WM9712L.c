@@ -104,7 +104,7 @@ static void wm9712LprvGpioRecalc(struct WM9712L *wm)
 static bool wm9712LprvCodecRegR(void *userData, uint32_t regAddr, uint16_t *regValP)
 {
 	struct WM9712L *wm = (struct WM9712L*)userData;
-	enum WM9712REG which = regAddr;
+	enum WM9712REG which = (enum WM9712REG)regAddr;
 	uint16_t val;
 	
 	switch (which) {
@@ -242,11 +242,11 @@ static bool wm9712LprvCodecRegR(void *userData, uint32_t regAddr, uint16_t *regV
 			break;
 		
 		default:
-			fprintf(stderr, "unknown reg read [0x%04x]\n", regAddr);
+			fprintf(stderr, "unknown reg read [0x%04x]\n", (unsigned)regAddr);
 			return false;
 	}
 	
-	fprintf(stderr, "codec read [0x%04x] -> %04x\n", regAddr, val);
+	//fprintf(stderr, "codec read [0x%04x] -> %04x\n", (unsigned)regAddr, (unsigned)val);
 	*regValP = val;
 	return true;
 }
@@ -254,9 +254,9 @@ static bool wm9712LprvCodecRegR(void *userData, uint32_t regAddr, uint16_t *regV
 static bool wm9712LprvCodecRegW(void *userData, uint32_t regAddr, uint16_t val)
 {
 	struct WM9712L *wm = (struct WM9712L*)userData;
-	enum WM9712REG which = regAddr;
+	enum WM9712REG which = (enum WM9712REG)regAddr;
 	
-	fprintf(stderr, "codec wri [0x%04x] -> [0x%04x]\n", val, regAddr);
+	//fprintf(stderr, "codec wri [0x%04x] -> [0x%04x]\n", (unsigned)val, (unsigned)regAddr);
 		
 	switch (which) {
 		
@@ -376,7 +376,7 @@ static bool wm9712LprvCodecRegW(void *userData, uint32_t regAddr, uint16_t val)
 			break;
 		
 		default:
-			fprintf(stderr, "unknown reg wri [0x%04x] -> [0x%04x]\n", val, regAddr);
+			fprintf(stderr, "unknown reg wri [0x%04x] -> [0x%04x]\n", (unsigned)val, (unsigned)regAddr);
 			return false;
 	}
 	return false;

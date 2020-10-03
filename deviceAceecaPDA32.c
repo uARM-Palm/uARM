@@ -92,7 +92,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	mNand = nandInit(nandFile, &nandSpecs, pda32nandPrvReady, sp->gpio);
 	sp->nand = mNand;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0xa0000000, 0x800, malloc(0x800));
+	mWeirdBusAccess = ramInit(sp->mem, 0xa0000000, 0x800, (uint32_t*)malloc(0x800));
 	if (!mWeirdBusAccess)
 		ERR("Cannot init RAM4");
 	
@@ -138,7 +138,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	mAdc = (struct S3C24xxAdc*)sp->adc;
 	
 	//battery is nearly full. device uses AIN0, 1:3.2 scale
-	s3c24xxAdcSetAuxAdc(mAdc, 0, 4100 * 10 / 32);
+	s3c24xxAdcSetAuxAdc(mAdc, 0, 4100UL * 10 / 32);
 
 	socBootload(sp->soc, 2048 | 0xc0000000ul, mNand);			//PDA32 boots from NAND directly
 }

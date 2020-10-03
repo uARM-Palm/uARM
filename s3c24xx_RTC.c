@@ -31,7 +31,7 @@ static bool s3c24xxRtcPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	uint32_t val = 0;
 	
 	if ((size != 1 && size != 4) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

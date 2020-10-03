@@ -76,7 +76,7 @@ static bool omapMiscPrvDpllMemAccessF(void* userData, uint32_t pa, uint_fast8_t 
 	uint32_t val = 0;
 	
 	if ((size != 2 && size != 4) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -119,7 +119,7 @@ static bool omapMiscPrvMpuClkCtrlMemAccessF(void* userData, uint32_t pa, uint_fa
 	uint32_t val = 0;
 	
 	if ((size != 2 && size != 4) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -203,7 +203,7 @@ static bool omapMiscPrvOmapCfgMemAccessF(void* userData, uint32_t pa, uint_fast8
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -242,9 +242,9 @@ static bool omapMiscPrvOmapCfgMemAccessF(void* userData, uint32_t pa, uint_fast8
 		case 0x34 / 4:
 		case 0x38 / 4:
 			if (write)
-				misc->omapCfg.FUNC_MUX_CTRL[pa - 0x00 / 4 - 1] = val;
+				misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4 - 1] = val;
 			else
-				val = misc->omapCfg.FUNC_MUX_CTRL[pa - 0x00 / 4 - 1];
+				val = misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4 - 1];
 			break;
 		
 		case 0x40 / 4:
@@ -252,9 +252,9 @@ static bool omapMiscPrvOmapCfgMemAccessF(void* userData, uint32_t pa, uint_fast8
 		case 0x48 / 4:
 		case 0x4c / 4:
 			if (write)
-				misc->omapCfg.PULL_DWN_CTRL[pa - 0x00 / 4 - 1] = val;
+				misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4 - 1] = val;
 			else
-				val = misc->omapCfg.PULL_DWN_CTRL[pa - 0x00 / 4 - 1];
+				val = misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4 - 1];
 			break;
 		
 		case 0x50 / 4:
@@ -301,7 +301,7 @@ static bool omapMiscPrvDspClkmMemAccessF(void* userData, uint32_t pa, uint_fast8
 	uint_fast16_t val = 0;
 	
 	if (size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -363,7 +363,7 @@ static bool omapMiscPrvMpuiMemAccessF(void* userData, uint32_t pa, uint_fast8_t 
 	uint32_t val = 0;
 	
 	if ((size != 4 && size != 2) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -437,7 +437,7 @@ static bool omapMiscPrvTrafficCtrlMemAccessF(void* userData, uint32_t pa, uint_f
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

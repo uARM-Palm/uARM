@@ -174,7 +174,7 @@ static void tg50ucPrvReset(struct TG50uc *uc)
 
 static bool tg50ucPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* buf)
 {
-	struct TG50uc *uc = userData;
+	struct TG50uc *uc = (struct TG50uc*)userData;
 	bool handled = true;
 	uint32_t val = 0;
 	
@@ -313,16 +313,16 @@ static bool tg50ucPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 		if (handled) {
 			
 			if (write)
-				fprintf(stderr, " * UC 0x%08x -> [0x%08x]\n", val, pa);
+				fprintf(stderr, " * UC 0x%08lx -> [0x%08lx]\n", (unsigned long)val, (unsigned long)pa);
 			else
-				fprintf(stderr, " * UC [0x%08x] -> 0x%08x\n", pa, val);
+				fprintf(stderr, " * UC [0x%08lx] -> 0x%08lx\n", (unsigned long)pa, (unsigned long)val);
 		}
 		else {
 			
 			if (write)
-				fprintf(stderr, " * UC 0x%08x -> [0x%08x] FAILED\n", val, pa);
+				fprintf(stderr, " * UC 0x%08lx -> [0x%08lx] FAILED\n", (unsigned long)val, (unsigned long)pa);
 			else
-				fprintf(stderr, " * UC [0x%08x] -> (4 bytes) FAILED\n", pa);
+				fprintf(stderr, " * UC [0x%08lx] -> (4 bytes) FAILED\n", (unsigned long)pa);
 		}
 		
 		return handled;
@@ -345,7 +345,7 @@ static bool tg50ucPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	}
 	else {
 		
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

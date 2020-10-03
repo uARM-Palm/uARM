@@ -136,7 +136,7 @@ static void omapMmcPrvCmdSend(struct OmapMmc *mmc)
 				mmc->stat |= 0x0100;	//command crc error
 			break;
 	}
-	fprintf(stderr, "MMC CMD %d(0x%08x) -> %d, %02x %02x %02x %02x %02x %02x\n", cmd, mmc->arg, gotReplyType, reply[0], reply[1], reply[2], reply[3], reply[4], reply[5]);
+	fprintf(stderr, "MMC CMD %d(0x%08lx) -> %d, %02x %02x %02x %02x %02x %02x\n", cmd, (unsigned long)mmc->arg, gotReplyType, reply[0], reply[1], reply[2], reply[3], reply[4], reply[5]);
 
 	if ((mmc->wasAcmd && cmd == 41) || cmd == 1) {	//OCR_busy flag
 		if (!(reply[0] & 0x80))
@@ -213,7 +213,7 @@ static bool omapMmcPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	bool ret = true;
 	
 	if ((size != 4 && size != 2) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -221,7 +221,7 @@ static bool omapMmcPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	
 	if (write) {
 		val = size == 2 ? *(uint16_t*)buf : *(uint32_t*)buf;
-	//	fprintf(stderr, "MMC 0x%08x->[0x%08x]\n", (unsigned)val, (unsigned)(OMAP_MMC_BASE + 4 * pa));
+	//	fprintf(stderr, "MMC 0x%08lx->[0x%08lx]\n", (unsigned long)val, (unsigned long)(OMAP_MMC_BASE + 4 * pa));
 	}
 
 	switch (pa) {
@@ -367,7 +367,7 @@ static bool omapMmcPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			*(uint16_t*)buf = val;
 		else
 			*(uint32_t*)buf = val;
-	//	fprintf(stderr, "MMC [0x%08x] -> 0x%08x (%s)\n", (unsigned)(OMAP_MMC_BASE + 4 * pa), (unsigned)val, ret ? "SUCCESS" : "FAIL");
+	//	fprintf(stderr, "MMC [0x%08lx] -> 0x%08lx (%s)\n", (unsigned long)(OMAP_MMC_BASE + 4 * pa), (unsigned long)val, ret ? "SUCCESS" : "FAIL");
 	}
 	
 	return ret;

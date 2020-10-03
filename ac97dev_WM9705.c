@@ -94,11 +94,11 @@ static uint16_t* wm9705prvGetVolReg(struct WM9705 *wm, uint32_t regAddr)
 
 static bool wm9705prvCodecRegR(void *userData, uint32_t regAddr, uint16_t *regValP)
 {
+	enum WM9705REG which = (enum WM9705REG)regAddr;
 	struct WM9705 *wm = (struct WM9705*)userData;
-	enum WM9705REG which = regAddr;
 	uint16_t val;
 	
-	fprintf(stderr, "codec read [0x%04x]\n", regAddr);
+	fprintf(stderr, "codec read [0x%04x]\n", (unsigned)regAddr);
 	
 	switch (which) {
 		case RESET:
@@ -188,10 +188,10 @@ static bool wm9705prvCodecRegR(void *userData, uint32_t regAddr, uint16_t *regVa
 
 static bool wm9705prvCodecRegW(void *userData, uint32_t regAddr, uint16_t val)
 {
+	enum WM9705REG which = (enum WM9705REG)regAddr;
 	struct WM9705 *wm = (struct WM9705*)userData;
-	enum WM9705REG which = regAddr;
 	
-	fprintf(stderr, "codec wri 0x%04x -> [0x%04x]\n", val, regAddr);
+	fprintf(stderr, "codec wri 0x%04x -> [0x%04x]\n", (unsigned)val, (unsigned)regAddr);
 		
 	switch (regAddr) {
 		case VOLMASTER:

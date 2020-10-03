@@ -40,11 +40,11 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	if (!keypadDefineRow(kp, 0, 18) || !keypadDefineRow(kp, 1, 19) || !keypadDefineRow(kp, 2, 20) || !keypadDefineRow(kp, 3, 21) || !keypadDefineRow(kp, 4, 22) || !keypadDefineRow(kp, 5, 23) || !keypadDefineRow(kp, 6, 24) || !keypadDefineRow(kp, 7, 25) || !keypadDefineRow(kp, 8, 26) || !keypadDefineRow(kp, 9, 27) || !keypadDefineRow(kp, 10, 79) || !keypadDefineRow(kp, 11, 80))
 		ERR("Cannot init keypad rows");
 	
-	mWifiMemSpace1 = ramInit(sp->mem, 0x28000000, 1024, malloc(1024));
+	mWifiMemSpace1 = ramInit(sp->mem, 0x28000000, 1024, (uint32_t*)malloc(1024));
 	if(!mWifiMemSpace1)
 		ERR("Cannot init RAM4");
 	
-	mWifiMemSpace2 = ramInit(sp->mem, 0x20000000, 1024, malloc(1024));
+	mWifiMemSpace2 = ramInit(sp->mem, 0x20000000, 1024, (uint32_t*)malloc(1024));
 	if(!mWifiMemSpace2)
 		ERR("Cannot init RAM3");
 	

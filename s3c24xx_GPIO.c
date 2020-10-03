@@ -165,7 +165,7 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	}
 
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -353,7 +353,7 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			if (write)
 				gpio->dsc[pa - 0xc4 / 4] = val;
 			else
-				val = gpio->dsc[pa - 0xB8 / 4];
+				val = gpio->dsc[pa - 0xc4 / 4];
 			break;
 		
 		case 0xcc / 4:
@@ -429,7 +429,7 @@ void socGpioSetState(struct SocGpio *gpio, uint_fast8_t gpioNum, bool on)
 			uint_fast8_t pinNo = gpioNum % NUM_GPIOS_NORMAL_BANK;
 			
 			if (pinNo > gpio->bank[bankNo].numGpios)
-				ERR("GPIO%c has no pin %u on S3C24xx\n", 'B' + bankNo, pinNo);
+				ERR("GPIO%c has no pin %u on S3C24xx\n", (char)('B' + bankNo), pinNo);
 			
 			if (on)
 				gpio->bank[bankNo].inputs |= 1UL << pinNo;
@@ -477,7 +477,7 @@ enum SocGpioState socGpioGetState(struct SocGpio *gpio, uint_fast8_t gpioNum)
 		
 		if (pinNo > gpio->bank[bankNo].numGpios) {
 			
-			ERR("GPIO%c has no pin %u on S3C24xx\n", 'B' + bankNo, pinNo);
+			ERR("GPIO%c has no pin %u on S3C24xx\n", (char)('B' + bankNo), pinNo);
 			return SocGpioStateNoSuchGpio;
 		}
 		switch ((gpio->bank[bankNo].con >> (pinNo * 2)) & 3) {
@@ -521,7 +521,7 @@ void socGpioSetNotif(struct SocGpio *gpio, uint_fast8_t gpioNum, GpioChangedNoti
 		uint_fast8_t pinNo = gpioNum % NUM_GPIOS_NORMAL_BANK;
 		
 		if (pinNo > gpio->bank[bankNo].numGpios)
-			ERR("GPIO%c has no pin %u on S3C24xx\n", 'B' + bankNo, pinNo);
+			ERR("GPIO%c has no pin %u on S3C24xx\n", (char)('B' + bankNo), pinNo);
 		else {
 			
 			gpio->bank[bankNo].notifF[pinNo] = notifF;

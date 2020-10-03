@@ -33,7 +33,7 @@ static bool directNandPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	bool ret, cle = false, ale = false;
 	
 	if (size != 1) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -54,7 +54,7 @@ static bool directNandPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	}
 	else {
 		
-		ret = nandRead(directNand->nand, cle, ale, buf);
+		ret = nandRead(directNand->nand, cle, ale, (uint8_t*)buf);
 //		if (pa & 6)
 //			fprintf(stderr, "NAND r c%u a%u 0x%02x -> %s\n", cle, ale, *(uint8_t*)buf, ret ? "OK" : "FAIL");
 	}

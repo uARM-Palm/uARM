@@ -94,7 +94,7 @@ void icacheInvalAddr(struct icache* ic, uint32_t va)
 	}
 }
 
-bool icacheFetch(struct icache* ic, uint32_t va, uint8_t sz, bool priviledged, uint8_t* fsrP, void* buf)
+bool icacheFetch(struct icache* ic, uint32_t va, uint_fast8_t sz, bool priviledged, uint_fast8_t* fsrP, void* buf)
 {
 	struct icacheLine *lines, *line = NULL;
 	uint32_t off = va % ICACHE_LINE_SZ;

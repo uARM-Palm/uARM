@@ -124,19 +124,19 @@ static enum SdReplyType vsdPrepareR1resp(struct VSD *vsd, uint8_t cmd, uint8_t *
 
 static enum SdReplyType vsdRejectCmd(struct VSD *vsd, uint8_t cmd, uint32_t param, uint8_t *reply, enum RejectReason why, bool wasAcmd)
 {
-	uint32_t r1orr = 1 << 19;	//generic error
+	uint32_t r1orr = 1UL << 19;	//generic error
 	
-	fprintf(stderr, "Rejecting %sCMD%u(0x%08x)\n", wasAcmd ? "A" : "", cmd, param);
+	fprintf(stderr, "Rejecting %sCMD%u(0x%08lx)\n", wasAcmd ? "A" : "", cmd, (unsigned long)param);
 	
 	switch (why) {
 		case InvalidInCurrentState:
 			fprintf(stderr, " -> invalid in current state %u\n", vsd->state);
-			r1orr = 1 << 22;
+			r1orr = 1UL << 22;
 			break;
 		
 		case UnacceptableParam:
 			fprintf(stderr, " -> parameter is unacceptable\n");
-			r1orr = 1 << 31;
+			r1orr = 1UL << 31;
 			break;
 		
 		case UnknownCommand:
@@ -619,7 +619,7 @@ enum SdDataReplyType vsdDataXferBlockToCard(struct VSD *vsd, const void* data, u
 		
 		if (!vsd->secW(vsd->curSec, data)) {
 			
-			fprintf(stderr, "failed to write SD backing store sec %u\n", vsd->curSec);
+			fprintf(stderr, "failed to write SD backing store sec %lu\n", (unsigned long)vsd->curSec);
 			return SdDataErrBackingStore;
 		}
 		if (vsd->haveExpectedNumBlocks && !--vsd->numBlocksExpected)
@@ -655,7 +655,7 @@ enum SdDataReplyType vsdDataXferBlockFromCard(struct VSD *vsd, void* data, uint3
 	if (vsd->bufIsData) {
 		if (!vsd->secR(vsd->curSec, data)) {
 			
-			fprintf(stderr, "failed to read SD backing store sec %u\n", vsd->curSec);
+			fprintf(stderr, "failed to read SD backing store sec %lu\n", (unsigned long)vsd->curSec);
 			return SdDataErrBackingStore;
 		}
 		
@@ -680,7 +680,7 @@ enum SdDataReplyType vsdDataXferBlockFromCard(struct VSD *vsd, void* data, uint3
 
 struct VSD* vsdInit(SdSectorR sR, SdSectorW sW, uint32_t nSec)
 {
-	struct VSD* vsd = malloc(sizeof(struct VSD));
+	struct VSD *vsd = (struct VSD*)malloc(sizeof(struct VSD));
 	
 	if (vsd) {
 		

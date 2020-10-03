@@ -40,7 +40,7 @@ static bool s3c24xxLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -210,7 +210,7 @@ static uint16_t* s3c24xxLcdPrvGetFb(struct S3C24xxLcd *lcd, uint32_t w, uint32_t
 		if (lcd->hardGrafArea && w == h)
 			winH += 3 * w / 8;
 		
-		fprintf(stderr, "SCREEN configured for %u x %u\n", w, h);
+		fprintf(stderr, "SCREEN configured for %u x %u\n", (unsigned)w, (unsigned)h);
 		lcd->mWindow = SDL_CreateWindow("uARM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, winH, 0);
 		if (lcd->mWindow == NULL)
 			ERR("Couldn't create window: %s\n", SDL_GetError());
@@ -551,7 +551,7 @@ void s3c24xxLcdPeriodic(struct S3C24xxLcd *lcd)
 					break;
 				
 				default:
-					ERR("LCD color mode 0x0%x\n", (lcd->lcdcon1 >> 1) & 0x0f);
+					ERR("LCD color mode 0x0%x\n", (unsigned)((lcd->lcdcon1 >> 1) & 0x0f));
 					break;
 			}
 		}

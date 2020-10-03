@@ -37,12 +37,12 @@ static bool msCtrlrPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	if (size == 4 && !write && (pa == 0x2f0 || pa == 0x2f8)) {
 		
 		*(uint32_t*)buf = (pa  == 0x2f0) ? msc->reply_lo_2f0 : msc->reply_hi_2f8;
-		fprintf(stderr, "MSC %c [%04x] == 0x%08x\n", write ? 'W' : 'R', pa, *(uint32_t*)buf);
+		fprintf(stderr, "MSC %c [%04lx] == 0x%08lx\n", (char)(write ? 'W' : 'R'), (unsigned long)pa, (unsigned long)*(uint32_t*)buf);
 		return true;
 	}
 	
 	if (size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -123,15 +123,15 @@ static bool msCtrlrPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			break;
 		
 		default:
-			fprintf(stderr, "unknown reg 0x%08x\n", pa);
+			fprintf(stderr, "unknown reg 0x%08lx\n", (unsigned long)pa);
 			ret = false;
 			break;
 	}
 	
 	if (ret)
-		fprintf(stderr, "MSC %c [%04x] == 0x%04x\n", write ? 'W' : 'R', pa, val);
+		fprintf(stderr, "MSC %c [%04lx] == 0x%04lx\n", (char)(write ? 'W' : 'R'), (unsigned long)pa, (unsigned long)val);
 	else
-		fprintf(stderr, "MSC %c [%04x] FAILED\n", write ? 'W' : 'R', pa);
+		fprintf(stderr, "MSC %c [%04lx] FAILED\n", (char)(write ? 'W' : 'R'), (unsigned long)pa);
 	
 	if (!write)
 		*(uint16_t*)buf = val;

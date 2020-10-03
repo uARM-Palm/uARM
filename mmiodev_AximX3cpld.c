@@ -25,14 +25,14 @@ static bool aximX3cpldPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	pa -= AXIM_X3_CPLD_BASE;
 	
 	if(size != 4 || !write || pa) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
 	val = *(uint32_t*)buf;
 	
 	if (cpld->val != val)
-		fprintf(stderr, " * CPLD 0x%08x -> 0x%08x\n", cpld->val, val);
+		fprintf(stderr, " * CPLD 0x%08lx -> 0x%08lx\n", (unsigned long)cpld->val, (unsigned long)val);
 	cpld->val = val;
 	return true;
 }

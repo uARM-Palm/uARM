@@ -124,7 +124,7 @@ static bool ads7846prvBit(struct Ads7846 *ads, bool hi)
 
 static void ads7846prvRx(struct Ads7846 *ads, int_fast8_t numBitsGot, uint_fast16_t valGot)
 {
-	uint_fast8_t i;
+	int_fast8_t i;
 	
 	valGot <<= 16 - numBitsGot;
 	

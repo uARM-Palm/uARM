@@ -79,7 +79,7 @@ static uint16_t* omapLcdPrvGetFb(struct OmapLcd *lcd)
 		if (lcd->hardGrafArea && w == h)
 			winH += 3 * w / 8;
 		
-		fprintf(stderr, "SCREEN configured for %u x %u\n", w, h);
+		fprintf(stderr, "SCREEN configured for %u x %u\n", (unsigned)w, (unsigned)h);
 		lcd->mWindow = SDL_CreateWindow("uARM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, winH, 0);
 		if (lcd->mWindow == NULL)
 			ERR("Couldn't create window: %s\n", SDL_GetError());
@@ -268,7 +268,7 @@ static bool omapLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -332,7 +332,7 @@ static bool omapLcdPrvDmaMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	uint_fast16_t val = 0;
 	
 	if (size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

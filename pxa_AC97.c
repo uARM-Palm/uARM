@@ -172,16 +172,16 @@ static bool socAC97PrvModemFifoR(struct SocAC97 *ac97, uint32_t *valP)
 	return socAC97PrvFifoR(ac97, &ac97->primaryModem, valP);
 }
 
-static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* buf){
-
+static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* buf)
+{
+	struct SocAC97 *ac97 = (struct SocAC97*)userData;
 	struct Ac97CodecStruct *cd = NULL;
-	struct SocAC97 *ac97 = userData;
 	uint32_t val = 0;
 	
 	pa -= PXA_AC97_BASE;
 	
 	if (size != 4 && size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -280,14 +280,14 @@ static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			if (write)
 				return socAC97PrvPcmFifoW(ac97, val);
 			else
-				return socAC97PrvPcmFifoR(ac97, buf);
+				return socAC97PrvPcmFifoR(ac97, (uint32_t*)buf);
 			break;
 		
 		case 24:
 			if (write)
 				return false;
 			else
-				return socAC97PrvMicFifoR(ac97, buf);
+				return socAC97PrvMicFifoR(ac97, (uint32_t*)buf);
 			break;
 		
 		case 64:
@@ -330,7 +330,7 @@ static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			if (write)
 				return socAC97PrvModemFifoW(ac97, val);
 			else
-				return socAC97PrvModemFifoR(ac97, buf);
+				return socAC97PrvModemFifoR(ac97, (uint32_t*)buf);
 			break;
 	}
 	if (pa >= 0x080 && pa < 0x0c0)

@@ -388,7 +388,7 @@ struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const ui
 		
 		piece->base = adr;
 		piece->size = *pieceSizes++;
-		piece->buf = *pieces++;
+		piece->buf = (uint32_t*)*pieces++;
 		piece->rom = rom;
 		
 		adr += piece->size;

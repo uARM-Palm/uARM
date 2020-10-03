@@ -140,7 +140,7 @@ int main(int argc, char** argv)
 		romLen = ftell(romFile);
 		rewind(romFile);
 	
-		rom = malloc(romLen);
+		rom = (uint8_t*)malloc(romLen);
 		if (!rom) {
 			
 			fprintf(stderr, "CANNOT ALLOC ROM\n");

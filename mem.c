@@ -90,7 +90,7 @@ bool memAccess(struct ArmMem *mem, uint32_t addr, uint_fast8_t size, uint_fast8_
 	
 	if (!ret && !(accessType & MEM_ACCCESS_FLAG_NOERROR)) {
 		
-		fprintf(stderr, "Memory %s of %u bytes to PA 0x%08x fails\n", wantWrite ? "write" : "read", size, addr);
+		fprintf(stderr, "Memory %s of %u bytes to PA 0x%08lx fails\n", wantWrite ? "write" : "read", size, (unsigned long)addr);
 		while(1);	//make debugging easier
 	}
 	

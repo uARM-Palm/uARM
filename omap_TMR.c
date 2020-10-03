@@ -29,7 +29,7 @@ static bool omapTmrPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -79,7 +79,7 @@ struct OmapTmr* omapTmrInit(struct ArmMem *physMem, struct SocIc *ic, struct Oma
 	struct OmapTmr *tmr = (struct OmapTmr*)malloc(sizeof(*tmr));
 	
 	if (!tmr)
-		ERR("cannot alloc TMR@0x%08x", base);
+		ERR("cannot alloc TMR@0x%08lx", (unsigned long)base);
 	
 	memset(tmr, 0, sizeof (*tmr));
 	
@@ -88,7 +88,7 @@ struct OmapTmr* omapTmrInit(struct ArmMem *physMem, struct SocIc *ic, struct Oma
 	tmr->irqNo = irqNo;
 	
 	if (!memRegionAdd(physMem, base, OMAP_TMR_SIZE, omapTmrPrvMemAccessF, tmr))
-		ERR("cannot add TMR@0x%08x to MEM\n", base);
+		ERR("cannot add TMR@0x%08lx to MEM\n", (unsigned long)base);
 	
 	return tmr;
 }

@@ -115,7 +115,7 @@ static bool socGpioPrvMpuioMemAccessF(void* userData, uint32_t pa, uint_fast8_t 
 	uint_fast16_t val = 0, old;
 	
 	if ((size != 2 && size != 4) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -269,7 +269,7 @@ static bool socGpioPrvSharedMemAccessF(void* userData, uint32_t pa, uint_fast8_t
 	uint_fast16_t val = 0, old;
 	
 	if ((size != 2 && size != 4) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

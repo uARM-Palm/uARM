@@ -431,8 +431,9 @@ static void mmuPrvDumpUpdate(uint32_t va, uint32_t pa, uint32_t len, uint8_t dom
 	if (valid != wasValid || dom != wasDom || ap != wasAp || c != wasC || b != wasB || expectPa != pa) {	//not a continuation of what we've been at...
 		
 		if (wasValid)
-			fprintf(stderr, "0x%08x - 0x%08x -> 0x%08x - 0x%08x don%u ap%u %c %c\n",
-				startVa, va_end, startPa, startPa + (va_end - startVa), wasDom, wasAp, wasC ? 'c' : ' ', wasB ? 'b' : ' ');
+			fprintf(stderr, "0x%08lx - 0x%08lx -> 0x%08lx - 0x%08lx don%u ap%u %c %c\n",
+				(unsigned long)startVa, (unsigned long)va_end, (unsigned long)startPa, (unsigned long)(startPa + (va_end - startVa)),
+				wasDom, wasAp, (char)(wasC ? 'c' : ' '), (char)(wasB ? 'b' : ' '));
 		
 		wasValid = valid;
 		if (valid) {	//start of a new range

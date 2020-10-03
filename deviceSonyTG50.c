@@ -284,7 +284,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	if (!mMsc)
 		ERR("Cannot init MSC");
 	
-	mUnknownSram = ramInit(sp->mem, 0xac000000, 1024, malloc(1024));
+	mUnknownSram = ramInit(sp->mem, 0xac000000, 1024, (uint32_t*)malloc(1024));
 	if (!mUnknownSram)
 		ERR("Cannot init RAM4");
 	

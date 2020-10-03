@@ -450,8 +450,9 @@ struct NAND* nandInit(FILE *nandFile, const struct NandSpecs *specs, NandReadyCb
 	if (nandFile) {
 		t = fread(nand->data, 1, nandSz, nandFile);
 		if (nandSz != t) {
-			fprintf(stderr, "Cannot read nand. got %u, wanted %u\n", t, nandSz);
-			return false;
+			fprintf(stderr, "Cannot read nand. got %lu, wanted %lu\n", (unsigned long)t, (unsigned long)nandSz);
+			free(nand);
+			return NULL;
 		}
 		else
 			fprintf(stderr, "read %u bytes of nand\n", (unsigned)nandSz);

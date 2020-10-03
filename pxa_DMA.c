@@ -188,7 +188,7 @@ static bool socDmaPrvChannelDoBurst(struct SocDma* dma, uint_fast8_t channel)		/
 	
 	if (num % each) {	//xfer size not multiple of xfer item sz?
 		
-		fprintf(stderr, "cannot xfer %u bytes using %u-byte piece. Halting\n", num, each);
+		fprintf(stderr, "cannot xfer %u bytes using %u-byte piece. Halting\n", (unsigned)num, (unsigned)each);
 		//this should never happen and is unpredictable on real HW. halt to allow debug
 		while(1);
 	}
@@ -417,7 +417,7 @@ static bool socDmaPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

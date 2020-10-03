@@ -253,7 +253,7 @@ static bool w86l488PrvIndirectAccess(struct W86L488 *wl, bool write, uint16_t *b
 		[IREG_NO_TEST] = "TEST",
 		[IREG_NO_ID_CODE] = "ID CODE",
 	};
-	fprintf(stderr, "WL %c i[%02x %10s] == 0x%04x\n", write ? 'W' : 'R', wl->indAddr, strIndirect[wl->indAddr], val);
+	fprintf(stderr, "WL %c i[%02x %10s] == 0x%04lx\n", (char)(write ? 'W' : 'R'), wl->indAddr, strIndirect[wl->indAddr], (unsigned long)val);
 	
 	if (!write)
 		*buf = val;
@@ -266,12 +266,12 @@ static void w86l488PrvExecCmd(struct W86L488 *wl, uint8_t cmd, uint32_t param)
 	enum SdReplyType ret;
 	uint8_t reply[17];
 	
-	fprintf(stderr, "cmd %u (0x%08x)\n", cmd, param);
+	fprintf(stderr, "cmd %u (0x%08lx)\n", cmd, (unsigned long)param);
 	
 	wl->sta &=~ 0x3000;
 	
 	if (wl->vsd) {
-		fprintf(stderr, "sending cmd %u (0x%08x)\n", cmd & 0x3f, param);
+		fprintf(stderr, "sending cmd %u (0x%08lx)\n", cmd & 0x3f, (unsigned long)param);
 		ret = vsdCommand(wl->vsd, cmd, param, reply);
 	}
 	else {
@@ -372,12 +372,12 @@ static bool w86l488PrvCtrlW(struct W86L488 *wl, uint16_t val)
 
 static bool w86l488PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* buf)
 {
-	struct W86L488 *wl = userData;
+	struct W86L488 *wl = (struct W86L488*)userData;
 	bool ret = true;
 	uint32_t val = 0;
 	
 	if(size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -408,7 +408,7 @@ static bool w86l488PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			if (write)
 				ret = w86l488PrvFifoW(wl, val);
 			else
-				ret = w86l488PrvFifoR(wl, buf);
+				ret = w86l488PrvFifoR(wl, (uint16_t*)buf);
 			break;
 		
 		case REG_NO_INT_STAT_CTRL:
@@ -473,7 +473,7 @@ static bool w86l488PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 			break;
 		
 		case REG_NO_INDIRECT_DATA:
-			return w86l488PrvIndirectAccess(wl, write, buf);
+			return w86l488PrvIndirectAccess(wl, write, (uint16_t*)buf);
 			break;
 		
 		default:
@@ -490,7 +490,7 @@ static bool w86l488PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		[REG_NO_INDIRECT_ADDR] = "IND ADDR",
 		[REG_NO_INDIRECT_DATA] = "IND DATA",
 	};
-	fprintf(stderr, "WL %c d[%02x %10s] == 0x%04x\n", write ? 'W' : 'R', pa, strDirect[pa], val);
+	fprintf(stderr, "WL %c d[%02lx %10s] == 0x%04lx\n", (char)(write ? 'W' : 'R'), (unsigned long)pa, strDirect[pa], (unsigned long)val);
 	
 	if (!write)
 		*(uint16_t*)buf = val;

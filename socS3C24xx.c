@@ -27,6 +27,7 @@
 #include "device.h"
 #include "keys.h"
 #include "vSD.h"
+#include <string.h>
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 #include "util.h"
@@ -126,9 +127,9 @@ static void socUartPrvWrite(uint_fast16_t chr, void* userData)
 
 struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t romNumPieces, uint32_t sdNumSectors, SdSectorR sdR, SdSectorW sdW, FILE *nandFile, int gdbPort, uint_fast8_t socRev)
 {
-	struct SoC *soc = malloc(sizeof(struct SoC));
+	struct SoC *soc = (struct SoC*)malloc(sizeof(struct SoC));
 	struct SocPeriphs sp;
-	void *ramBuffer;
+	uint32_t *ramBuffer;
 	uint32_t i;
 	
 	memset(soc, 0, sizeof(*soc));
@@ -148,7 +149,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 			ERR("Cannot init ROM");
 	}
 	
-	soc->sramBuffer = malloc(SRAM_SIZE);
+	soc->sramBuffer = (uint8_t*)malloc(SRAM_SIZE);
 	if (!soc->sramBuffer)
 		ERR("cannot alloc SRAM space\n");
 	
@@ -156,7 +157,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->sram)
 		ERR("Cannot init SRAM");
 	
-	ramBuffer = malloc(deviceGetRamSize());
+	ramBuffer = (uint32_t*)malloc(deviceGetRamSize());
 	if (!ramBuffer)
 		ERR("cannot alloc RAM space\n");
 	

@@ -237,7 +237,7 @@ static void omapMcBspPrvGetXsrIfNeeded(struct OmapMcBsp *sp)
 	if (!(sp->spcr2 & 4)) {		//we are empty
 		
 		sp->xsr = 0;
-		fprintf(stderr, "McBsp@0x%08x: TX underrun\n", sp->base);
+		fprintf(stderr, "McBsp@0x%08lx: TX underrun\n", (unsigned long)sp->base);
 	}
 	
 	sp->xsr <<= 32 - sp->curTxWordBitLen;	//move data to top bits for transmission
@@ -320,7 +320,7 @@ static bool omapMcBspPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
 		size = 2;
 	
 	if (size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -592,7 +592,7 @@ struct OmapMcBsp* omapMcBspInit(struct ArmMem *physMem, struct SocIc *ic, struct
 	struct OmapMcBsp *sp = (struct OmapMcBsp*)malloc(sizeof(*sp));
 	
 	if (!sp)
-		ERR("cannot alloc McBSP @ 0x%08x", base);
+		ERR("cannot alloc McBSP @ 0x%08lx", (unsigned long)base);
 	
 	memset(sp, 0, sizeof (*sp));
 	sp->dma = dma;
@@ -604,7 +604,7 @@ struct OmapMcBsp* omapMcBspInit(struct ArmMem *physMem, struct SocIc *ic, struct
 	sp->base = base;
 	
 	if (!memRegionAdd(physMem, base, OMAP_McBSP_SIZE, omapMcBspPrvMemAccessF, sp))
-		ERR("cannot add McBSP @ 0x%08x to MEM\n", base);
+		ERR("cannot add McBSP @ 0x%08lx to MEM\n", (unsigned long)base);
 	
 	return sp;
 }

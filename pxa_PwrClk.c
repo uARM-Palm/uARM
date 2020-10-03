@@ -54,7 +54,7 @@ static bool pxaPwrClkPrvCoproc14regXferFunc(struct ArmCpu *cpu, void* userData, 
 				else{
 					pc->turbo = (val & 1) != 0;
 					if (val & 2)
-						fprintf(stderr, "Set speed mode (CCCR + cp14 reg6) to 0x%08x 0x%08x\n", pc->CCCR, val);
+						fprintf(stderr, "Set speed mode (CCCR + cp14 reg6) to 0x%08lx 0x%08lx\n", (unsigned long)pc->CCCR, (unsigned long)val);
 				}
 				goto success;
 			
@@ -67,7 +67,7 @@ static bool pxaPwrClkPrvCoproc14regXferFunc(struct ArmCpu *cpu, void* userData, 
 				}
 				else if (val != 0 && op2 == 0) {
 					
-					fprintf(stderr, "Someone tried to set processor power mode (cp14 reg7) to 0x%08x\n", val);
+					fprintf(stderr, "Someone tried to set processor power mode (cp14 reg7) to 0x%08lx\n", (unsigned long)val);
 				}
 				goto success;
 			
@@ -96,7 +96,7 @@ static bool pxaPwrClkPrvClockMgrMemAccessF(void* userData, uint32_t pa, uint8_t 
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -140,7 +140,7 @@ static bool pxaPwrClkPrvPowerMgrMemAccessF(void* userData, uint32_t pa, uint_fas
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

@@ -76,7 +76,7 @@ static bool socUartPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 	uint32_t val = 0;
 	
 	if ((size != 4 && size != 1) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -194,7 +194,7 @@ struct SocUart* socUartInit(struct ArmMem *physMem, struct SocIc *ic, uint32_t b
 	struct SocUart *uart = (struct SocUart*)malloc(sizeof(*uart));
 	
 	if (!uart)
-		ERR("cannot alloc UART at 0x%08x", baseAddr);
+		ERR("cannot alloc UART at 0x%08lx", (unsigned long)baseAddr);
 	
 	memset(uart, 0, sizeof (*uart));
 	

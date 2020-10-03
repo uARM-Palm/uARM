@@ -772,7 +772,7 @@ static int32_t cpuPrvMedia_signedSaturate32(int32_t sign)
 	return (sign < 0) ? -0x80000000UL : 0x7ffffffful;
 }
 
-static bool cpuPrvMemOpEx(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fast8_t size, bool write, bool priviledged, uint8_t* fsrP, uint_fast8_t memAccessFlags)
+static bool cpuPrvMemOpEx(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fast8_t size, bool write, bool priviledged, uint_fast8_t* fsrP, uint_fast8_t memAccessFlags)
 {
 	uint32_t pa;
 	
@@ -809,12 +809,12 @@ static bool cpuPrvMemOpEx(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fa
 }
 
 //for internal use
-static bool cpuPrvMemOp(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fast8_t size, bool write, bool priviledged, uint8_t* fsrP)
+static bool cpuPrvMemOp(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fast8_t size, bool write, bool priviledged, uint_fast8_t* fsrP)
 {
 	if (cpuPrvMemOpEx(cpu, buf, vaddr, size, write, priviledged, fsrP, 0))
 		return true;
 	
-	fprintf(stderr, "%c of %u bytes to 0x%08x failed!\n", write ? 'W' : 'R', size, vaddr);
+	fprintf(stderr, "%c of %u bytes to 0x%08lx failed!\n", (int)(write ? 'W' : 'R'), (unsigned)size, (unsigned long)vaddr);
 	gdbStubDebugBreakRequested(cpu->debugStub);
 	
 	return false;
@@ -1954,14 +1954,14 @@ load_store_mode_2:
 				if (cpu->regs[0] == 4) {
 					
 					uint32_t addr = cpu->regs[1];
-					uint8_t ch, fsr;
+					uint8_t ch;
 					
 					while (cpuPrvMemOp(cpu, &ch, addr++, 1, false, true, &fsr) && ch)
 						fprintf(stderr, "%c", ch);
 				}
 				else if (cpu->regs[0] == 3) {
 					
-					uint8_t ch, fsr;
+					uint8_t ch;
 					
 					if (cpuPrvMemOp(cpu, &ch, cpu->regs[1], 1, false, true, &fsr) && ch)
 						fprintf(stderr, "%c", ch);

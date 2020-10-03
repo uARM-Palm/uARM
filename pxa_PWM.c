@@ -24,7 +24,7 @@ static bool pxaPwmPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	uint32_t val = 0;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -69,12 +69,12 @@ struct PxaPwm* pxaPwmInit(struct ArmMem *physMem, uint32_t base)
 	struct PxaPwm *pwm = (struct PxaPwm*)malloc(sizeof(*pwm));
 	
 	if (!pwm)
-		ERR("cannot alloc PWM at 0x%08x", base);
+		ERR("cannot alloc PWM at 0x%08lx", (unsigned long)base);
 	
 	memset(pwm, 0, sizeof (*pwm));
 	
 	if (!memRegionAdd(physMem, base, PXA_PWM_SIZE, pxaPwmPrvMemAccessF, pwm))
-		ERR("cannot add PWM at 0x%08x to MEM\n", base);
+		ERR("cannot add PWM at 0x%08lx to MEM\n", (unsigned long)base);
 	
 	return pwm;
 }

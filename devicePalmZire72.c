@@ -160,7 +160,7 @@ uint_fast8_t deviceGetSocRev(void)
 
 void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
-	mWeirdBusAccess = ramInit(sp->mem, 0x04090000, 0x40, malloc(0x40));
+	mWeirdBusAccess = ramInit(sp->mem, 0x04090000, 0x40, (uint32_t*)malloc(0x40));
 	if (!mWeirdBusAccess)
 		ERR("Cannot init RAM4");
 		

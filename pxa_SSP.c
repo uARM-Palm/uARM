@@ -108,7 +108,7 @@ static bool socSspPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	uint32_t val;
 	
 	if(size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -143,7 +143,7 @@ static bool socSspPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 			if (write)
 				return socSspPrvFifoW(ssp, val);
 			else
-				return socSspPrvFifoR(ssp, buf);
+				return socSspPrvFifoR(ssp, (uint16_t*)buf);
 		
 		default:
 			return false;

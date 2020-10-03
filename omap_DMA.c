@@ -68,7 +68,7 @@ static bool socDmaPrvCtrlMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	uint32_t val = 0;
 	
 	if ((size != 4 && size != 2) || (pa & 3)) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -115,8 +115,8 @@ static void socDmaPrvChannelInitialize(struct SocDma *dma, struct DmaChannel *ch
 	if (0)
 	if (ch - dma->ch != 7) {
 		static const char *modes[] = {"const", "linear", "single index", "double index"};
-		fprintf(stderr, "DMA start ch %u %u byte x %u x %u from 0x%08x to 0x%08x\n",
-			(unsigned)(ch - dma->ch), 1 << (ch->csdp & 3), ch->active.cen, ch->active.cfn, ch->active.src, ch->active.dst);
+		fprintf(stderr, "DMA start ch %u %u byte x %u x %u from 0x%08lx to 0x%08lx\n",
+			(unsigned)(ch - dma->ch), 1 << (ch->csdp & 3), ch->active.cen, ch->active.cfn, (unsigned long)ch->active.src, (unsigned long)ch->active.dst);
 		fprintf(stderr, " src mode is %s, dst mode is %s\n", modes[(ch->ccr >> 12) & 3], modes[(ch->ccr >> 14) & 3]);
 		fprintf(stderr, " cei = %d, cfi = %d\n", ch->active.cei, ch->active.cfi);
 	}
@@ -130,7 +130,7 @@ static bool socDmaPrvChsMemAccessF(void* userData, uint32_t pa, uint_fast8_t siz
 	uint_fast8_t chNo;
 	
 	if (size != 2) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -356,9 +356,9 @@ static void socDmaPrvChannelActIfNeeded(struct SocDma *dma, struct DmaChannel *c
 	for (i = 0; i < nElems; i++) {
 		
 		if (!memAccess(dma->mem, ch->curSrcAddr, accessSz, false, xferBuf)) 
-			ERR("DMA ch %u bus error on read at 0x%08x\n", (unsigned)(ch - dma->ch), ch->curSrcAddr);
+			ERR("DMA ch %u bus error on read at 0x%08lx\n", (unsigned)(ch - dma->ch), (unsigned long)ch->curSrcAddr);
 		else if (!memAccess(dma->mem, ch->curDstAddr, accessSz, true, xferBuf))
-			ERR("DMA ch %u bus error on write at 0x%08x\n", (unsigned)(ch - dma->ch), ch->curDstAddr);
+			ERR("DMA ch %u bus error on write at 0x%08lx\n", (unsigned)(ch - dma->ch), (unsigned long)ch->curDstAddr);
 		
 		if (++ch->curElemIdx == ch->active.cen) {
 			ch->curElemIdx = 0;

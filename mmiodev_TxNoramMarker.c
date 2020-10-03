@@ -25,7 +25,7 @@ static bool txNoRamMarkerPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t
 	pa -= TX_NO_RAM_MARKER_BASE;
 	
 	if (size != 4 || pa) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	

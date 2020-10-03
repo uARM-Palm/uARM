@@ -40,17 +40,16 @@ struct SocIc {
 
 static void socIcPrvRecalc(struct SocIc *ic, struct OmapIc *oic)
 {
-	int_fast8_t highestIrqPrio = -1, highestFiqPrio = -1;
+	int_fast8_t highestIrqPrio = -1, highestFiqPrio = -1, highestIrqNo, highestFiqNo;
 	uint32_t unmasked = oic->itr &~ oic->mir, bit;
-	uint_fast8_t i, highestIrqNo, highestFiqNo;
 	bool nowIrq, nowFiq;
+	uint_fast8_t i;
 	
 	
 	for (i = 0, bit = 1; bit; bit <<= 1, i++) {
 		
 		int_fast8_t prio = oic->ilr[i] >> 2;
-		int_fast8_t *highestP;
-		uint_fast8_t *irqNoP;
+		int_fast8_t *highestP, *irqNoP;
 		
 		if (!(unmasked & bit))
 			continue;
@@ -101,7 +100,7 @@ static bool socIcPrvMemAccessF(struct SocIc *ic, struct OmapIc *oic, uint32_t pa
 	uint32_t paorig = pa;
 	
 	if (size != 4) {
-		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08x\n", __func__, write ? "write" : "read", size, pa);
+		fprintf(stderr, "%s: Unexpected %s of %u bytes to 0x%08lx\n", __func__, write ? "write" : "read", size, (unsigned long)pa);
 		return false;
 	}
 	
@@ -111,7 +110,7 @@ static bool socIcPrvMemAccessF(struct SocIc *ic, struct OmapIc *oic, uint32_t pa
 		val = *(uint32_t*)buf;
 	
 	//if (write)
-	//	fprintf(stderr, "IC write to 0x%08x => [0x%08x]\n", val, paorig);
+	//	fprintf(stderr, "IC write to 0x%08lx => [0x%08lx]\n", (unsigned long)val, (unsigned long)paorig);
 	
 	switch (pa) {
 		case 0x00 / 4:
@@ -186,7 +185,7 @@ static bool socIcPrvMemAccessF(struct SocIc *ic, struct OmapIc *oic, uint32_t pa
 	}
 	
 	//if (!write)
-	//	fprintf(stderr, "IC READ [0x%08x] -> 0x%08x\n", paorig, val);
+	//	fprintf(stderr, "IC READ [0x%08lx] -> 0x%08lx\n", (unsigned long)paorig, (unsigned long)val);
 	
 	socIcPrvRecalc(ic, oic);
 	

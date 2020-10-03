@@ -1522,9 +1522,9 @@ void palmosInstrNotify(uint32_t instr, uint32_t lr)
 		}
 		
 		if (c->name)
-			fprintf(stderr, "OSCALL %s from 0x%08x\n", c->name, lr);
+			fprintf(stderr, "OSCALL %s from 0x%08lx\n", c->name, (unsigned long)lr);
 		else
-			fprintf(stderr, "OSCALL {%d, 0x%04x} from 0x%08x\n", tab, (instr & 0xfff), lr);
+			fprintf(stderr, "OSCALL {%d, 0x%04x} from 0x%08lx\n", tab, (unsigned)(instr & 0xfff), (unsigned long)lr);
 	}
 	tab = ((instr & 0xfffffff0) == 0xe519c000) ? (int)(instr & 0x0f) : -1;
 }
