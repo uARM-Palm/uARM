@@ -196,7 +196,7 @@ void devicePeriodic(uint32_t cycles)
 
 void deviceTouch(int x, int y)
 {
-	wm9712LsetPen(mWM9712L, (x >= 0 && y >= 0) ? 310 + 11 * x : -1, (x >= 0 && y >= 0) ? 280 + 8 * y : y, 1000);
+	wm9712LsetPen(mWM9712L, (x >= 0 && y >= 0) ? 280 + 173 * x / 16 : -1, (x >= 0 && y >= 0) ? 210 + 134 * y / 16 : y, 1000);
 }
 
 void deviceKey(uint32_t key, bool down)
