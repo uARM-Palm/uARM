@@ -111,7 +111,7 @@ enum RomChipType deviceGetRomMemType(void)
 
 uint32_t deviceGetRamSize(void)
 {
-	return 32UL << 20;
+	return 16UL << 20;
 }
 
 uint_fast8_t deviceGetSocRev(void)
