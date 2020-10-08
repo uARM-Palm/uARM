@@ -106,7 +106,7 @@ bool deviceHasGrafArea(void)
 
 enum RomChipType deviceGetRomMemType(void)
 {
-	return RomWriteError;
+	return RomStrataFlash16x;
 }
 
 uint32_t deviceGetRamSize(void)
