@@ -37,8 +37,14 @@ static void pxaTimrPrvCheckMatch(struct PxaTimr *timr, uint_fast8_t idx)
 {
 	uint_fast8_t v = 1UL << idx;
 	
-	if ((timr->OSCR == timr->OSMR[idx]) && (timr->OIER & v))
-		timr->OSSR |= v;
+	if (timr->OSCR == timr->OSMR[idx]) {
+		
+		if (idx == 3 && timr->OWER)
+			ERR("WDT fires\n");
+		
+		if (timr->OIER & v)
+			timr->OSSR |= v;
+	}
 }
 
 static void pxaTimrPrvUpdate(struct PxaTimr *timr)
@@ -85,8 +91,6 @@ static bool pxaTimrPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 				break;
 			
 			case 6:
-				if (val & 1)
-					return false;	//not supported
 				timr->OWER = val;
 				break;
 			
