@@ -8,21 +8,88 @@
 #include "mem.h"
 #include "ROM.h"
 
+#define STRATAFLASH_BLOCK_SIZE	0x20000ul
+
+enum StrataFlashMode {
+	StrataFlashNormal,
+	StrataFlashReadStatus,
+	StrataFlashSetReadConfigRegister,
+	StrataFlashReadID,
+	StrataFlashReadCFI,
+	StrataFlashErzCy1,
+	StrataFlashWriCy1,
+};
 
 struct ArmRomPiece {
+	struct ArmRomPiece *next;
 	struct ArmRom *rom;
 	uint32_t base, size;
-	uint32_t* buf;
+	uint32_t *buf;
 };
 
 struct ArmRom {
 
-	uint32_t start;
+	uint32_t start, opAddr;
+	struct ArmRomPiece *pieces;
 	enum RomChipType chipType;
 	enum StrataFlashMode mode;
-	uint16_t configReg;
+	uint16_t configReg, busyCy;
 };
+
+
+static bool romPrvWrite(struct ArmRom *rom, uint32_t ofst, uint_fast16_t val)
+{
+	struct ArmRomPiece *piece = rom->pieces;
+	uint32_t i, now, sz = STRATAFLASH_BLOCK_SIZE;
 	
+	//fprintf(stderr, "SF write of 0x%04x at 0x%08lx\n", (unsigned)val, (unsigned long)ofst);
+	
+	while (piece && piece->size <= ofst) {
+		ofst -= piece->size;
+		piece = piece->next;
+	}
+	
+	if (!piece)
+		return false;
+	
+	*(uint16_t*)(((char*)piece->buf) + ofst) &= le16toh(val);
+	
+	return true;
+}
+
+static bool romPrvErase(struct ArmRom *rom, uint32_t ofst)
+{
+	struct ArmRomPiece *piece = rom->pieces;
+	uint32_t i, now, sz = STRATAFLASH_BLOCK_SIZE;
+	
+	fprintf(stderr, "SF erase at 0x%08x\n", ofst);
+	
+	while (piece && piece->size <= ofst) {
+		ofst -= piece->size;
+		piece = piece->next;
+	}
+	
+	if (!piece)
+		return false;
+	
+	while (sz) {
+		
+		if (!piece)
+			return false;
+		
+		now = piece->size - ofst;
+		if (now > sz)
+			now = sz;
+		
+		memset(((char*)piece->buf) + ofst, 0xff, now);
+		sz -= now;
+		ofst = 0;
+		piece = piece->next;
+	}
+	
+	return true;
+}
+
 static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* bufP)
 {
 	struct ArmRomPiece *piece = (struct ArmRomPiece*)userData;
@@ -80,37 +147,92 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 				rom->mode = StrataFlashNormal;
 				return true;
 			}
+			else if (rom->mode == StrataFlashWriCy1) {
+				
+				if (fromStart != rom->opAddr)
+					return false;
+				if (!romPrvWrite(rom, fromStart, cmd))
+					return false;
+				rom->busyCy = 0x0010;
+				rom->mode = StrataFlashReadStatus;
+				return true;
+			}
 			else switch (cmd & 0xff) {
 				
 				case 0x00 ... 0x03:	//STS Settings
 					return true;
 				
 				case 0x50:
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
 					//clear status register
 					rom->mode = StrataFlashNormal;
 					return true;
 				
 				case 0x60:
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
 					//set read config reg
 					rom->mode = StrataFlashSetReadConfigRegister;
 					return true;
 				
 				case 0x70:
-					//read sttaus register
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
+					//read status register
+					rom->mode = StrataFlashReadStatus;
+					return true;
+				
+				case 0x20:
+					if (rom->mode != StrataFlashNormal)
+						return false;
+					rom->mode = StrataFlashErzCy1;
+					rom->opAddr = fromStart;
+					return true;
+				
+				case 0x40:
+					if (rom->mode != StrataFlashNormal)
+						return false;
+					rom->mode = StrataFlashWriCy1;
+					rom->opAddr = fromStart;
+					return true;
+				
+				case 0xd0:
+					if (rom->mode != StrataFlashErzCy1)
+						return false;
+					if (fromStart != rom->opAddr)
+						return false;
+					fromStart /= STRATAFLASH_BLOCK_SIZE;
+					fromStart *= STRATAFLASH_BLOCK_SIZE;
+					if (!romPrvErase(rom, fromStart))
+						return false;
+					rom->busyCy = 0x1000;
 					rom->mode = StrataFlashReadStatus;
 					return true;
 				
 				case 0x90:
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
 					//read identifier
 					rom->mode = StrataFlashReadID;
 					return true;
 				
 				case 0x98:
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
 					//read query CFI
 					rom->mode = StrataFlashReadCFI;
 					return true;
 				
 				case 0xff:
+					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+						return false;
+					
 					//read
 					rom->mode = StrataFlashNormal;
 					return true;
@@ -201,8 +323,14 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 			switch (rom->mode) {
 				
 				case StrataFlashReadStatus:
-					rom->mode = StrataFlashNormal;
-					reply = 0x0080;	//ready;
+					if (rom->busyCy) {
+						rom->busyCy--;
+						reply = 0;		//busy
+					}
+					else {
+						rom->mode = StrataFlashNormal;	//only if not busy
+						reply = 0x0080;	//ready;
+					}
 					break;
 				
 				case StrataFlashReadID:
@@ -363,6 +491,7 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const uint32_t *pieceSizes, uint32_t numPieces, enum RomChipType chipType)
 {
 	struct ArmRom *rom = (struct ArmRom*)malloc(sizeof(*rom));
+	struct ArmRomPiece *prev = NULL, *t, *piece = NULL;
 	uint32_t i;
 	
 	if (!rom)
@@ -377,11 +506,12 @@ struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const ui
 	
 	for (i = 0; i < numPieces; i++) {
 		
-		struct ArmRomPiece *piece = (struct ArmRomPiece*)malloc(sizeof(*piece));
+		piece = (struct ArmRomPiece*)malloc(sizeof(*piece));
 		if (!piece)
 			ERR("cannot alloc ROM piece at 0x%08x", adr);
 		
 		memset(piece, 0, sizeof (*piece));
+		piece->next = prev;	//we'll reverse the list later
 		
 		if (adr & 0x1f)
 			ERR("rom piece cannot start at 0x%08x\n", adr);
@@ -395,6 +525,14 @@ struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const ui
 	
 		if (!memRegionAdd(mem, piece->base, piece->size, romAccessF, piece))
 			ERR("cannot add ROM piece at 0x%08x to MEM\n", adr);
+	}
+	
+	//we linked the list in reverse. fix this
+	while (piece) {
+		t = piece->next;
+		piece->next = rom->pieces;
+		rom->pieces = piece;
+		piece = t;
 	}
 	
 	rom->chipType = chipType;

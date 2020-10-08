@@ -15,13 +15,6 @@ enum RomChipType {
 	RomStrataflash16x2x,
 };
 
-enum StrataFlashMode {
-	StrataFlashNormal,
-	StrataFlashReadStatus,
-	StrataFlashSetReadConfigRegister,
-	StrataFlashReadID,
-	StrataFlashReadCFI,
-};
 
 struct ArmRom;
 
