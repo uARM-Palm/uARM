@@ -51,7 +51,7 @@ static void socDmaPrvChannelIrqRecalc(struct SocDma* dma, uint_fast8_t channel)
 {
 	dma->DINT &=~ (1 << channel);
 	
-	if (dma->channels[channel].CSR & 0x20000000) {	//stop irq enabled?
+	if (dma->channels[channel].CSR & 0x20000000ul) {	//stop irq enabled?
 		
 		if (dma->channels[channel].CSR & 0x8) {		//channel in stoped state
 			
@@ -120,7 +120,7 @@ static void socDmaPrvChannelDescrFetch(struct SocDma* dma, struct PxaDmaChannel 
 		ch->TAR = nextT;
 		ch->CR = nextC;
 		
-		if (nextC & 0x00400000)		//start irq requested?
+		if (nextC & 0x00400000ul)		//start irq requested?
 			ch->CSR |= 2;
 	}
 	
@@ -139,13 +139,13 @@ static bool socDmaPrvChannelCheckForEnd(struct SocDma* dma, uint_fast8_t channel
 		
 		//fprintf(stderr, "channel %u ran out of data\n", channel);
 		
-		if (ch->CR & 0x00200000) {	//end irq requested?
+		if (ch->CR & 0x00200000ul) {	//end irq requested?
 			
 			ch->CSR |= 4;
 			irqUpdate = true;
 		}
 		
-		if (ch->CSR & 0x40000000) {	//no descr fetch mode?	same as no descriptors
+		if (ch->CSR & 0x40000000ul) {	//no descr fetch mode?	same as no descriptors
 			
 			//fprintf(stderr, "end cause no descr\n");
 			socDmaPrvChannelStop(dma, ch);
@@ -211,9 +211,9 @@ static bool socDmaPrvChannelDoBurst(struct SocDma* dma, uint_fast8_t channel)		/
 			return true;
 		}
 		
-		if (ch->CR & 0x80000000)
+		if (ch->CR & 0x80000000ul)
 			ch->SAR += each;
-		if (ch->CR & 0x40000000)
+		if (ch->CR & 0x40000000ul)
 			ch->TAR += each;
 		ch->CR -= each;
 	}
@@ -242,7 +242,7 @@ static void socDmaPrvChannelActIfNeeded(struct SocDma* dma, uint_fast8_t channel
 		if (ch->CSR & 0x100)			//request?
 			doWork = true;
 		
-		if (!(ch->CR & 0x30000000)) {	//no flow control?
+		if (!(ch->CR & 0x30000000ul)) {	//no flow control?
 			
 			doWork = true;
 			justOne = false;			//do it all
@@ -271,7 +271,7 @@ static void socDmaPrvChannelMaybeStart(struct SocDma* dma, struct PxaDmaChannel 
 		
 		ch->CSR &=~ 0x100;
 				
-		if (!(ch->CSR & 0x40000000)) {	//not no-fetch mode
+		if (!(ch->CSR & 0x40000000ul)) {	//not no-fetch mode
 			
 			ch->CR &=~ 0x1fff;	//so we fatch descr on first request
 			
@@ -315,7 +315,7 @@ static bool socDmaPrvChannelRegWrite(struct SocDma* dma, uint_fast8_t channel, u
 	}
 	else {	//CSR
 		
-		uint32_t newVal = ((prevCsr & 0x0000031f) | (val & 0xfcc00400ul)) &~ (val & 0x00000217);
+		uint32_t newVal = ((prevCsr & 0x0000031ful) | (val & 0xfcc00400ul)) &~ (val & 0x00000217ul);
 		
 		if (val & 0x02000000ul)
 			newVal |= 0x0400;
@@ -331,7 +331,7 @@ static bool socDmaPrvChannelRegWrite(struct SocDma* dma, uint_fast8_t channel, u
 		
 		socDmaPrvChannelMaybeStart(dma, &dma->channels[channel], prevCsr);
 		
-		if (!(newVal & 0x80000000) && (prevCsr & 0x80000000)) {		//just stopped
+		if (!(newVal & 0x80000000ul) && (prevCsr & 0x80000000ul)) {		//just stopped
 			
 			//fprintf(stderr, "channel %u stopped\n", channel);
 			socDmaPrvChannelStop(dma, ch);

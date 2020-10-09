@@ -50,7 +50,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 {
 	uint_fast8_t i;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0x08000000, 0x280, (uint32_t*)malloc(0x280));
+	mWeirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
 	if (!mWeirdBusAccess)
 		ERR("Cannot init RAM4");
 	

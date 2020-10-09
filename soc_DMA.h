@@ -16,4 +16,3 @@ void socDmaExternalReq(struct SocDma* dma, uint_fast8_t chNum, bool requested);	
 
 
 #endif
-

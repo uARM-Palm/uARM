@@ -6,7 +6,7 @@
 #include "util.h"
 
 //MMIO info
-#define W86L488_SIZE 		0x00000010
+#define W86L488_SIZE 		0x10
 
 
 //direct regs

@@ -18,4 +18,3 @@ struct SocIc* socIcInit(struct ArmCpu *cpu, struct ArmMem *physMem, uint_fast8_t
 void socIcInt(struct SocIc *ic, uint_fast8_t intNum, bool raise);
 
 #endif
-

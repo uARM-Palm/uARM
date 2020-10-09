@@ -8,7 +8,7 @@
 #include "util.h"
 
 
-#define OMAP_UWIRE_BASE		0xFFFB3000
+#define OMAP_UWIRE_BASE		0xFFFB3000ul
 #define OMAP_UWIRE_SIZE		0x1c
 
 

@@ -29,4 +29,3 @@ void socUartProcess(struct SocUart *uart);		//write out data in TX fifo and read
 void socUartSetFuncs(struct SocUart *uart, SocUartReadF readF, SocUartWriteF writeF, void *userData);
 
 #endif
-

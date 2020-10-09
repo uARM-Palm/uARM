@@ -7,7 +7,7 @@
 #include "mem.h"
 
 
-#define PXA270_IMC_BASE		0x58000000
+#define PXA270_IMC_BASE		0x58000000ul
 #define PXA270_IMC_SIZE		0x0c
 
 

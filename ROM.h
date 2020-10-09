@@ -28,4 +28,3 @@ struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const ui
 
 
 #endif
-

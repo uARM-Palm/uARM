@@ -48,9 +48,9 @@
 #include "util.h"
 
 
-#define CPUID_PXA255		0x69052D06	//spepping A0
-#define CPUID_PXA260		0x69052D06	//spepping B1
-#define CPUID_PXA270		0x49265013	//stepping C0
+#define CPUID_PXA255		0x69052D06ul	//spepping A0
+#define CPUID_PXA260		0x69052D06ul	//spepping B1
+#define CPUID_PXA270		0x49265013ul	//stepping C0
 
 
 #define SRAM_BASE	0x5c000000ul

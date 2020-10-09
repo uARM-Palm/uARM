@@ -139,7 +139,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->mem)
 		ERR("Cannot init physical memory manager");
 
-	soc->cpu = cpuInit(0, soc->mem, false /* xscale */, false /* omap */, gdbPort, 0x41129200, 0x0d172172);
+	soc->cpu = cpuInit(0, soc->mem, false /* xscale */, false /* omap */, gdbPort, 0x41129200ul, 0x0d172172ul);
 	if (!soc->cpu)
 		ERR("Cannot init CPU");
 	
@@ -153,7 +153,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->sramBuffer)
 		ERR("cannot alloc SRAM space\n");
 	
-	soc->sram = ramInit(soc->mem, romNumPieces ? 0x40000000 : 0x00000000, SRAM_SIZE, (uint32_t*)soc->sramBuffer);
+	soc->sram = ramInit(soc->mem, romNumPieces ? 0x40000000ul : 0x00000000ul, SRAM_SIZE, (uint32_t*)soc->sramBuffer);
 	if (!soc->sram)
 		ERR("Cannot init SRAM");
 	
@@ -273,9 +273,9 @@ static void socNandWait(struct SoC* soc, struct NAND *nand)
 
 void socBootload(struct SoC* soc, uint32_t nandPageSzAndFlags, void *param)
 {
-	uint32_t i, j, nandPageSz = nandPageSzAndFlags & 0xfffff;
-	bool extraColAddr = !!(nandPageSzAndFlags & 0x80000000);
-	bool extraReadCmd = !!(nandPageSzAndFlags & 0x40000000);
+	uint32_t i, j, nandPageSz = nandPageSzAndFlags & 0xffffful;
+	bool extraColAddr = !!(nandPageSzAndFlags & 0x80000000ul);
+	bool extraReadCmd = !!(nandPageSzAndFlags & 0x40000000ul);
 	struct NAND *nand = (struct NAND*)param;
 	
 	if (soc->rom)

@@ -92,7 +92,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	mNand = nandInit(nandFile, &nandSpecs, z22nandPrvReady, sp->gpio);
 	sp->nand = mNand;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0xa0000000, 0x800, (uint32_t*)malloc(0x800));
+	mWeirdBusAccess = ramInit(sp->mem, 0xa0000000ul, 0x800, (uint32_t*)malloc(0x800));
 	if (!mWeirdBusAccess)
 		ERR("Cannot init RAM4");
 	

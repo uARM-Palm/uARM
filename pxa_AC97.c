@@ -66,7 +66,7 @@ static void socAC97prvIrqUpdate(struct SocAC97 *ac97)
 	irq = irq || !!(ac97->micr & (ac97->misr << 1) & 0x14);
 	
 	irq = irq || (ac97->gcr & ac97->gsr & 0x300);
-	irq = irq || (ac97->gsr & 0x000c0000);
+	irq = irq || (ac97->gsr & 0x000c0000ul);
 	
 	socIcInt(ac97->ic, PXA_I_AC97, irq);
 }
@@ -258,7 +258,7 @@ static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 7:
 			if (write) {
-				ac97->gsr &=~ (val & 0x000c8c01);
+				ac97->gsr &=~ (val & 0x000c8c01ul);
 				socAC97prvIrqUpdate(ac97);
 			}
 			else
@@ -267,7 +267,7 @@ static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 8:
 			if (write)
-				ac97->car &= 0xfffffffe | (val & 1);
+				ac97->car &= 0xfffffffeul | (val & 1);
 			else if (ac97->car)
 				val = 1;
 			else {
@@ -350,9 +350,9 @@ static bool socAC97PrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		pa *= 2;
 		
 		if (write && cd->regW && cd->regW(cd->userData, pa, val))
-			ac97->gsr |= 0x00080000;
+			ac97->gsr |= 0x00080000ul;
 		else if (!write && cd->regR && cd->regR(cd->userData, pa, &cd->prevReadVal))
-			ac97->gsr |= 0x00040000;
+			ac97->gsr |= 0x00040000ul;
 		
 		ac97->car = 0;
 		val = readVal;

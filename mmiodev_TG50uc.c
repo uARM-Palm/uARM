@@ -35,8 +35,8 @@
 */
 
 
-#define TG50_UC_BASE	0x08000000
-#define TG50_UC_SIZE 	0x00000220
+#define TG50_UC_BASE	0x08000000ul
+#define TG50_UC_SIZE 	0x0220
 
 
 struct TG50ucGpioPort {

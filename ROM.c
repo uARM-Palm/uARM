@@ -349,22 +349,22 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 							break;
 						
 						case 0x81:	//protection registers (uniq ID by intel and by manuf) copied frpom same chip as this rom
-							reply = 0x001d0017;
+							reply = 0x001d0017ul;
 							skipdup = true;
 							break;
 						
 						case 0x82:
-							reply = 0x000a0003;
+							reply = 0x000a0003ul;
 							skipdup = true;
 							break;
 						
 						case 0x83:
-							reply = 0x3fb03fa6;
+							reply = 0x3fb03fa6ul;
 							skipdup = true;
 							break;
 						
 						case 0x84:
-							reply = 0x48d9c99a;
+							reply = 0x48d9c99aul;
 							skipdup = true;
 							break;
 						

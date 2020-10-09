@@ -236,7 +236,7 @@ static uint32_t s3c24xxLcdPrvReadWord(struct S3C24xxLcd *lcd, uint32_t addr)	//s
 	uint32_t val;
 	
 	if (!memAccess(lcd->mem, addr, sizeof(uint32_t), false, &val))
-		val = 0xaaaaaaaa;
+		val = 0xaaaaaaaaul;
 	
 	switch (lcd->lcdcon5 & 3) {	//swapping
 		case 0:	//none
@@ -248,7 +248,7 @@ static uint32_t s3c24xxLcdPrvReadWord(struct S3C24xxLcd *lcd, uint32_t addr)	//s
 			val = __builtin_bswap32(val);
 			break;
 		case 3:	//bytes & halwords (meaning byte sin halfwords)
-			val = ((val & 0xff00ff00) >> 8) | ((val << 8) & 0xff00ff00);
+			val = ((val & 0xff00ff00ul) >> 8) | ((val << 8) & 0xff00ff00ul);
 			break;
 	}
 	

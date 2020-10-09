@@ -331,7 +331,7 @@ enum SdReplyType vsdCommand(struct VSD *vsd, uint8_t cmd, uint32_t param, void *
 				replTyp = vsdRejectCmd(vsd, cmd, param, reply, InvalidInCurrentState, false /* there is no ACMD8 */);
 				break;
 			}
-			if ((param & 0xffffff00) != 0x100) {
+			if ((param & 0xffffff00ul) != 0x100) {
 				
 				replTyp = vsdRejectCmd(vsd, cmd, param, reply, UnacceptableParam, false /* there is no ACMD8 */);
 				break;
@@ -497,7 +497,7 @@ enum SdReplyType vsdCommand(struct VSD *vsd, uint8_t cmd, uint32_t param, void *
 			
 			replTyp = SdReply48bits;
 			vsd->reportAcmdNext = 1;
-			if (!(param & 0x00FFFFFF)) {	//inquiry command
+			if (!(param & 0x00FFFFFFul)) {	//inquiry command
 				
 				if (vsd->prevAcmd41Param) {	//inqury not first ??
 					
@@ -520,7 +520,7 @@ enum SdReplyType vsdCommand(struct VSD *vsd, uint8_t cmd, uint32_t param, void *
 				
 				if (vsd->initWaitLeft)
 					vsd->initWaitLeft--;
-				else if (!(param & 0x40000000) && vsd->hcCard)
+				else if (!(param & 0x40000000ul) && vsd->hcCard)
 					fprintf(stderr, "HC card refusing to init without host-signalled support\n");
 				else {
 					if (vsd->hcCard)

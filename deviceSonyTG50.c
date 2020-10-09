@@ -280,11 +280,11 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	if (!mUc)
 		ERR("Cannot init TG50's UC");
 	
-	mMsc = msCtrlrInit(sp->mem, 0x14000000);
+	mMsc = msCtrlrInit(sp->mem, 0x14000000ul);
 	if (!mMsc)
 		ERR("Cannot init MSC");
 	
-	mUnknownSram = ramInit(sp->mem, 0xac000000, 1024, (uint32_t*)malloc(1024));
+	mUnknownSram = ramInit(sp->mem, 0xac000000ul, 1024, (uint32_t*)malloc(1024));
 	if (!mUnknownSram)
 		ERR("Cannot init RAM4");
 	

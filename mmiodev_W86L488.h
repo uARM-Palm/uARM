@@ -9,8 +9,8 @@
 #include "mem.h"
 #include "vSD.h"
 
-#define W86L488_BASE_T3 	0x08000000
-#define W86L488_BASE_AXIM	0x0c000000
+#define W86L488_BASE_T3 	0x08000000ul
+#define W86L488_BASE_AXIM	0x0c000000ul
 
 struct W86L488;
 

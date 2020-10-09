@@ -6,8 +6,8 @@
 #include "util.h"
 
 
-#define TX_NO_RAM_MARKER_BASE	0xA5FFFFFC
-#define TX_NO_RAM_MARKER_SIZE 	0x00000004
+#define TX_NO_RAM_MARKER_BASE	0xA5FFFFFCul
+#define TX_NO_RAM_MARKER_SIZE 	0x04
 
 
 struct TxNoRamMarker {

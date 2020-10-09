@@ -178,7 +178,7 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 0x00 / 4:
 			if (write) {
-				gpio->acon = val & 0x007fffff;
+				gpio->acon = val & 0x007ffffful;
 				if (gpio->dirNotifF)
 					gpio->dirNotifF(gpio->dirNotifD);
 			}
@@ -188,7 +188,7 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 0x04 / 4:
 			if (write) {
-				val &= 0x007fffff;
+				val &= 0x007ffffful;
 				val ^= gpio->adat;	//calc diff
 				gpio->adat ^= val;	//apply diff
 				
@@ -270,14 +270,14 @@ static bool socGpioPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 0x80 / 4:
 			if (write)
-				gpio->misccr = val & 0x007f377b;
+				gpio->misccr = val & 0x007f377bul;
 			else
 				val = gpio->misccr;
 			break;
 		
 		case 0x84 / 4:
 			if (write)
-				gpio->dclkcon = val & 0x0ff30ff3;
+				gpio->dclkcon = val & 0x0ff30ff3ul;
 			else
 				val = gpio->dclkcon;
 			break;

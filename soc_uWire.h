@@ -1,5 +1,4 @@
 //(c) uARM project    https://github.com/uARM-Palm/uARM    uARM@dmitry.gr
-
 #ifndef _SOC_UWIRE_H_
 #define _SOC_UWIRE_H_
 

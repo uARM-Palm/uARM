@@ -86,7 +86,7 @@ static void pxaKpcPrvMatrixRecalc(struct PxaKpc *kpc, bool lastKeyChangeWasDown)
 	uint_fast8_t c, val = 0;
 	
 	//ignore due to lack of matrix keypad enable?
-	if (!(kpc->kpc & 0x00001000))
+	if (!(kpc->kpc & 0x1000))
 		return;
 	
 	//auto scan?

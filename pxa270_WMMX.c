@@ -578,7 +578,7 @@ static bool pxa270wmmxPrvDataProcessingPack(struct Pxa270wmmx *wmmx, uint_fast8_
 					wmmx->wCSSF |= 1 << (i * 2);
 					wmmx->wCASF |= 0x40ul << (i * 8);
 				}
-				else if (ts32 > 0xffff) {
+				else if (ts32 > 0xffffl) {
 					ts32 = 0xffff;
 					wmmx->wCSSF |= 1 << (i * 2);
 					wmmx->wCASF |= 0x80ul << (i * 8);
@@ -1743,7 +1743,7 @@ static bool pxa270wmmxPrvRegXferTorc(struct Pxa270wmmx *wmmx, struct ArmCpu *cpu
 			
 		case 0b100:		//TORCW
 			val |= val << 16;
-			val &= 0xf0000000;
+			val &= 0xf0000000ul;
 			pxa270wmmxPrvSetCoreReg(cpu, Rd, val);
 			return true;
 		
@@ -1767,7 +1767,7 @@ static bool pxa270wmmxPrvRegXferTandc(struct Pxa270wmmx *wmmx, struct ArmCpu *cp
 			
 		case 0b100:		//TORCW
 			val &= val << 16;
-			val &= 0xf0000000;
+			val &= 0xf0000000ul;
 			pxa270wmmxPrvSetCoreReg(cpu, Rd, val);
 			return true;
 		

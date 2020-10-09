@@ -6,8 +6,8 @@
 #include "util.h"
 
 
-#define AXIM_X3_CPLD_BASE	0x08000000
-#define AXIM_X3_CPLD_SIZE 	0x00000004
+#define AXIM_X3_CPLD_BASE	0x08000000ul
+#define AXIM_X3_CPLD_SIZE 	0x04
 
 
 struct AximX3cpld {

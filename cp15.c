@@ -247,7 +247,7 @@ static bool cp15prvCoprocRegXferFunc(struct ArmCpu* cpu, void* userData, bool tw
 			if (read)
 				val = cpuGetPid(cp15->cpu);
 			else
-				cpuSetPid(cp15->cpu, val & 0xfe000000);
+				cpuSetPid(cp15->cpu, val & 0xfe000000ul);
 			goto success;
 		
 		case 14:	//xscale debug

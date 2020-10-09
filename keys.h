@@ -20,4 +20,3 @@ bool keypadAddMatrixKey(struct Keypad *kp, uint32_t sdlKey, unsigned row, unsign
 void keypadSdlKeyEvt(struct Keypad *kp, uint32_t sdlKey, bool wentDown);
 
 #endif
-

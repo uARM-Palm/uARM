@@ -126,7 +126,7 @@ bool mmuTranslate(struct ArmMmu *mmu, uint32_t adr, bool priviledged, bool write
 		return false;
 	}
 	
-	if (!memAccess(mmu->mem, mmu->transTablPA + ((adr & 0xFFF00000) >> 18), 4, MEM_ACCESS_TYPE_READ, &t)) {
+	if (!memAccess(mmu->mem, mmu->transTablPA + ((adr & 0xFFF00000ul) >> 18), 4, MEM_ACCESS_TYPE_READ, &t)) {
 		
 		if (fsrP)
 			*fsrP = 0x0C;	//translation external abort first level

@@ -1783,7 +1783,7 @@ load_store_mode_2:
 		case 9:		//load/store multiple
 			{
 				bool userModeRegs = false, copySPSR = false, isLoad = !!(instr & 0x00100000UL);
-				uint32_t loadedPc = 0xffffffff, origBaseRegVal;	//so we can restore on load failure, even if we loaded into it
+				uint32_t loadedPc = 0xfffffffful, origBaseRegVal;	//so we can restore on load failure, even if we loaded into it
 				uint_fast8_t idx, regNo;
 				
 				mode = cpuPrvArmAdrMode_4(cpu, instr, (cpu->M == ARM_SR_MODE_USR) || (cpu->M == ARM_SR_MODE_SYS), &regsList);
@@ -1949,7 +1949,7 @@ load_store_mode_2:
 		case 15:	//SWI
 
 			//some semihosting support
-			if ((wasT && (instr & 0x00ffffff) == 0xab) || (!wasT && (instr & 0x00ffffff) == 0x123456)) {
+			if ((wasT && (instr & 0x00fffffful) == 0xab) || (!wasT && (instr & 0x00fffffful) == 0x123456ul)) {
 				
 				if (cpu->regs[0] == 4) {
 					
@@ -2022,60 +2022,6 @@ static void cpuPrvCycleThumb(struct ArmCpu *cpu) {
 	uint16_t instrT, v16;
 	uint_fast8_t v8, fsr;
 
-
-	
-	
-	
-	/*
-	//speed up haldelay
-	//te: 0x3008F4E2
-	//xyz: 0x3008F06E
-	//z71: 0x3008f31a
-	if (cpu->regs[REG_NO_PC] == 0x3008f31a) {
-		cpu->regs[0] = 1;
-	}
-	if (cpu->regs[REG_NO_PC] == 0x30091FBA) {
-		uint16_t coords[2];
-		
-		cpuPrvMemOp(cpu, coords + 0, cpu->regs[5] + 0, 2, false, true, NULL);
-		cpuPrvMemOp(cpu, coords + 1, cpu->regs[5] + 2, 2, false, true, NULL);
-		
-		fprintf(stderr, "HALPenGetPosition() -> (%6d %6d) err 0x%04x\n", coords[0], coords[1], cpu->regs[0]);
-	}
-	
-	if (cpu->regs[REG_NO_PC] == 0x30092426) {
-		uint16_t coords[2];
-		
-		cpuPrvMemOp(cpu, coords + 0, cpu->regs[5] + 0, 2, false, true, NULL);
-		cpuPrvMemOp(cpu, coords + 1, cpu->regs[5] + 2, 2, false, true, NULL);
-		
-		fprintf(stderr, "readPenCoordsWithRetry() -> (%6d %6d) + %s\n", coords[0], coords[1], cpu->regs[0] ? "TRUE" : "FALSE");
-	}
-	
-	if (cpu->regs[REG_NO_PC] == 0x300996A6) {
-		uint16_t coords[2];
-		
-		cpuPrvMemOp(cpu, coords + 0, cpu->regs[5], 2, false, true, NULL);
-		cpuPrvMemOp(cpu, coords + 1, cpu->regs[6], 2, false, true, NULL);
-		
-		fprintf(stderr, "readPenCoords() -> (%6d %6d) + %s\n", coords[0], coords[1], cpu->regs[0] ? "TRUE" : "FALSE");
-	}
-	
-	if (cpu->regs[REG_NO_PC] == 0x30092442) {
-		
-		fprintf(stderr, "TSC IRQ\n");
-	}
-	
-	if (cpu->regs[REG_NO_PC] == 0x30092498) {
-		
-		fprintf(stderr, "TSC IRQ ENDS\n");
-	}
-	
-	if (cpu->regs[REG_NO_PC] == 0x30090264) {
-		
-		fprintf(stderr, "TIMER TASK\n");
-	}
-	*/
 	
 	privileged = cpu->M != ARM_SR_MODE_USR;
 	

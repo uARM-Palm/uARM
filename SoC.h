@@ -29,4 +29,3 @@ int socExtSerialReadChar(void);
 
 
 #endif
-

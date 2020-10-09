@@ -242,9 +242,9 @@ static bool omapMiscPrvOmapCfgMemAccessF(void* userData, uint32_t pa, uint_fast8
 		case 0x34 / 4:
 		case 0x38 / 4:
 			if (write)
-				misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4 - 1] = val;
+				misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4] = val;
 			else
-				val = misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4 - 1];
+				val = misc->omapCfg.FUNC_MUX_CTRL[pa - 0x10 / 4];
 			break;
 		
 		case 0x40 / 4:
@@ -252,9 +252,9 @@ static bool omapMiscPrvOmapCfgMemAccessF(void* userData, uint32_t pa, uint_fast8
 		case 0x48 / 4:
 		case 0x4c / 4:
 			if (write)
-				misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4 - 1] = val;
+				misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4] = val;
 			else
-				val = misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4 - 1];
+				val = misc->omapCfg.PULL_DWN_CTRL[pa - 0x40 / 4];
 			break;
 		
 		case 0x50 / 4:
@@ -376,7 +376,7 @@ static bool omapMiscPrvMpuiMemAccessF(void* userData, uint32_t pa, uint_fast8_t 
 		
 		case 0x00 / 4:
 			if (write)
-				misc->mpui.CTRL_REG = val & 0x007fffff;
+				misc->mpui.CTRL_REG = val & 0x007ffffful;
 			else
 				val = misc->mpui.CTRL_REG;
 			break;
@@ -387,21 +387,21 @@ static bool omapMiscPrvMpuiMemAccessF(void* userData, uint32_t pa, uint_fast8_t 
 			if (write)
 				return false;
 			else
-				val = 0x00ffffff;
+				val = 0x00fffffful;
 			break;
 			
 		case 0x10 / 4:	//STATUS_REG
 			if (write)
 				return false;
 			else
-				val = 0x00001fff;
+				val = 0x00001ffful;
 			break;
 		
 		case 0x14 / 4:
 			if (write)
 				return false;
 			else
-				val = 0x00000fff;
+				val = 0x00000ffful;
 			break;
 		
 		case 0x18 / 4:
@@ -469,14 +469,14 @@ static bool omapMiscPrvTrafficCtrlMemAccessF(void* userData, uint32_t pa, uint_f
 		case 0x18 / 4:
 		case 0x1C / 4:
 			if (write)
-				misc->trafficCfg.EMIFS_CSx_CONFIG[pa - 0x10 / 4] = val & 0x0037fff7;
+				misc->trafficCfg.EMIFS_CSx_CONFIG[pa - 0x10 / 4] = val & 0x0037fff7ul;
 			else
 				val = misc->trafficCfg.EMIFS_CSx_CONFIG[pa - 0x10 / 4];
 			break;
 		
 		case 0x20 / 4:
 			if (write)
-				misc->trafficCfg.EMIFF_SDRAM_CONFIG = val & 0x0fffffff;
+				misc->trafficCfg.EMIFF_SDRAM_CONFIG = val & 0x0ffffffful;
 			else
 				val = misc->trafficCfg.EMIFF_SDRAM_CONFIG;
 			break;
@@ -491,7 +491,7 @@ static bool omapMiscPrvTrafficCtrlMemAccessF(void* userData, uint32_t pa, uint_f
 		case 0x28 / 4:
 		case 0x2C / 4:
 			if (write)
-				misc->trafficCfg.TIMEOUT[pa - 0x28 / 4] = val & 0x00ff00ff;
+				misc->trafficCfg.TIMEOUT[pa - 0x28 / 4] = val & 0x00ff00fful;
 			else
 				val = misc->trafficCfg.TIMEOUT[pa - 0x28 / 4];
 			break;
@@ -533,7 +533,7 @@ static bool omapMiscPrvTrafficCtrlMemAccessF(void* userData, uint32_t pa, uint_f
 static bool omapMiscPrvIdcodeMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool write, void* buf)
 {
 	if (pa == OMAP_IDCODE_BASE && size == 4 && !write) {
-		*(uint32_t*)buf = 0x1b47002f;
+		*(uint32_t*)buf = 0x1b47002ful;
 		return true;
 	}
 	
@@ -570,7 +570,7 @@ struct OmapMisc* omapMiscInit(struct ArmMem *physMem)
 	misc->trafficCfg.EMIFF_SDRAM_CONFIG_2 = 0x03;
 	
 	//MPUI
-	misc->mpui.CTRL_REG = 0x0003ff1f;
+	misc->mpui.CTRL_REG = 0x0003ff1ful;
 	misc->mpui.DSP_API_CONFIG = 0xffff;
 
 	

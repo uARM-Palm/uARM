@@ -1509,7 +1509,7 @@ void palmosInstrNotify(uint32_t instr, uint32_t lr)
 {
 	static int tab = -1;
 	
-	if ((tab > 0) && ((instr & 0xfffff000) == 0xe59cf000)){
+	if ((tab > 0) && ((instr & 0xfffff000ul) == 0xe59cf000ul)){
 		
 		const struct OsCall *c;
 		
@@ -1526,5 +1526,5 @@ void palmosInstrNotify(uint32_t instr, uint32_t lr)
 		else
 			fprintf(stderr, "OSCALL {%d, 0x%04x} from 0x%08lx\n", tab, (unsigned)(instr & 0xfff), (unsigned long)lr);
 	}
-	tab = ((instr & 0xfffffff0) == 0xe519c000) ? (int)(instr & 0x0f) : -1;
+	tab = ((instr & 0xfffffff0ul) == 0xe519c000ul) ? (int)(instr & 0x0f) : -1;
 }

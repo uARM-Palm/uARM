@@ -6,7 +6,7 @@
 #include "util.h"
 
 
-#define MS_CONTROLLER_SIZE 	0x00000400
+#define MS_CONTROLLER_SIZE 	0x400
 
 
 struct MemoryStickController {

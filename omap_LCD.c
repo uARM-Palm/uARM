@@ -285,10 +285,10 @@ static bool omapLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 				if (!((lcd->ctrl | val) & 1))
 					lcd->status |= 0x01;
 				
-				lcd->ctrl = val & 0x01fff39b;
+				lcd->ctrl = val & 0x01fff39bul;
 			}
 			else
-				val = (lcd->ctrl & 0xfffffffe) | (lcd->curEna ? 1 : 0);
+				val = (lcd->ctrl & 0xfffffffeul) | (lcd->curEna ? 1 : 0);
 			break;
 		
 		case 0x04 / 4:
@@ -311,7 +311,7 @@ static bool omapLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size,
 		
 		case 0x14 / 4:
 			if (write)
-				lcd->subpanel = val & 0xa3ffffff;
+				lcd->subpanel = val & 0xa3fffffful;
 			else
 				val = lcd->subpanel;
 			break;

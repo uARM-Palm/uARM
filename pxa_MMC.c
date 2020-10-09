@@ -429,14 +429,14 @@ static bool pxaMmcPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 		
 		case 13:
 			if (write)
-				mmc->arg = (mmc->arg & 0x0000ffff) | (val << 16);
+				mmc->arg = (mmc->arg & 0x0000fffful) | (val << 16);
 			else
 				val = mmc->arg >> 16;
 			break;
 		
 		case 14:
 			if (write)
-				mmc->arg = (mmc->arg & 0xffff0000) | (val & 0xffff);
+				mmc->arg = (mmc->arg & 0xffff0000ul) | (val & 0xffff);
 			else
 				val = mmc->arg & 0xffff;
 			break;

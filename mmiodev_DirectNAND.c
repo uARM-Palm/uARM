@@ -68,7 +68,7 @@ static bool directNandPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 struct DirectNAND* directNandInit(struct ArmMem *physMem, uint32_t baseCleAddr, uint32_t baseAleAddr, uint32_t baseDataAddr, uint32_t maskBitsAddr, struct SocGpio* gpio, int rdyPin, const struct NandSpecs *specs, FILE *nandFile)
 {
 	struct DirectNAND *directNand = (struct DirectNAND*)malloc(sizeof(*directNand));
-	uint32_t minAddr = 0xffffffff, maxAddr = 0, length;
+	uint32_t minAddr = 0xfffffffful, maxAddr = 0, length;
 	
 	if (!directNand)
 		ERR("cannot alloc TE2 NAND");

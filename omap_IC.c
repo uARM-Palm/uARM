@@ -132,7 +132,7 @@ static bool socIcPrvMemAccessF(struct SocIc *ic, struct OmapIc *oic, uint32_t pa
 				return false;
 			else {
 				if (oic->higestIrq < 0)
-					val = 0xf000000f;	//why not?
+					val = 0xf000000ful;	//why not?
 				else {
 					val = oic->higestIrq;
 					if (!(oic->ilr[val] & 2))	//edge triggered gets cleared
@@ -146,7 +146,7 @@ static bool socIcPrvMemAccessF(struct SocIc *ic, struct OmapIc *oic, uint32_t pa
 				return false;
 			else {
 				if (oic->higestFiq < 0)
-					val = 0xf000000f;	//why not?
+					val = 0xf000000ful;	//why not?
 				else {
 					val = oic->higestFiq;
 					if (!(oic->ilr[val] & 2))	//edge triggered gets cleared

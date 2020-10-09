@@ -64,7 +64,7 @@ static bool omapCameraPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 		
 		case 0x08 / 4:
 			if (write)
-				cam->mode = val & 0x0007ffff;
+				cam->mode = val & 0x0007fffful;
 			else
 				val = cam->mode;
 			break;

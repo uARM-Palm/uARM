@@ -184,7 +184,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->mem)
 		ERR("Cannot init physical memory manager");
 
-	soc->cpu = cpuInit(ROM_BASE, soc->mem, false /* xscale */, true /* omap */, gdbPort, 0x54029152, 0x0514a1da);
+	soc->cpu = cpuInit(ROM_BASE, soc->mem, false /* xscale */, true /* omap */, gdbPort, 0x54029152ul, 0x0514a1daul);
 	if (!soc->cpu)
 		ERR("Cannot init CPU");
 	
@@ -266,7 +266,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 		
 		static const uint8_t irqs[] = {OMAP_I_McBSP_1_TX, OMAP_I_McBSP_2_TX, OMAP_I_McBSP_3_TX};
 		static const uint8_t dmas[] = {DMA_REQ_McBSP_1_TX, DMA_REQ_McBSP_2_TX, DMA_REQ_McBSP_3_TX};
-		static const uint32_t bases[] = {0xE1011800, 0xFFFB1000, 0xE1017000};
+		static const uint32_t bases[] = {0xE1011800ul, 0xFFFB1000ul, 0xE1017000ul};
 		
 		soc->mcbsp[i] = omapMcBspInit(soc->mem, soc->ic, soc->dma, bases[i], irqs[i], irqs[i] + 1, dmas[i], dmas[i] + 1);
 		if (!soc->mcbsp[i])

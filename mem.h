@@ -23,3 +23,4 @@ bool memRegionAdd(struct ArmMem* mem, uint32_t pa, uint32_t sz, ArmMemAccessF af
 bool memAccess(struct ArmMem* mem, uint32_t addr, uint_fast8_t size, uint_fast8_t accessType, void* buf);
 
 #endif
+
