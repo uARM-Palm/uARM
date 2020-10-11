@@ -134,7 +134,7 @@ static uint32_t cpuPrvROR(uint32_t val, uint_fast8_t ror)
 
 static void cpuPrvSetPC(struct ArmCpu *cpu, uint32_t pc)	//with interworking
 {
-	cpu->regs[REG_NO_PC] = pc &~ 1;
+	cpu->regs[REG_NO_PC] = pc &~ 1UL;
 	cpu->T = (pc & 1);
 	
 	if (!cpu->T && (pc & 2))
