@@ -191,6 +191,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	ramBuffer = (uint32_t*)malloc(SRAM_SIZE);
 	if (!ramBuffer)
 		ERR("cannot alloc SRAM space\n");
+	memset(ramBuffer, 0, SRAM_SIZE);
 	
 	soc->sram = ramInit(soc->mem, SRAM_BASE, SRAM_SIZE, ramBuffer);
 	if(!soc->sram)
@@ -199,6 +200,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	ramBuffer = (uint32_t*)malloc(deviceGetRamSize());
 	if (!ramBuffer)
 		ERR("cannot alloc RAM space\n");
+	memset(ramBuffer, 0, deviceGetRamSize());
 	
 	soc->ram = ramInit(soc->mem, RAM_BASE, deviceGetRamSize(), ramBuffer);
 	if(!soc->ram)
