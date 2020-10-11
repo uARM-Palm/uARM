@@ -91,8 +91,8 @@ Examples:
 ```
     ./uARM -r PalmOsCobaltT3.img                          # Boot PalmOs Cobalt on the T|T3
     ./uARM -x -n Z22.NAND.bin                             # Boot Z22 from NAND
-    ./uARM -n TX.NOR.bin -n TX.NAND.bin                   # Boot T|X
-    ./uARM -n TE2.NOR.bin -n TE2.NAND.bin -s sdcard.img   # Boot T|E with an sd card
+    ./uARM -r TX.NOR.bin -n TX.NAND.bin                   # Boot T|X
+    ./uARM -r TE2.NOR.bin -n TE2.NAND.bin -s sdcard.img   # Boot T|E with an sd card
 ```
 
 ### Tested images
