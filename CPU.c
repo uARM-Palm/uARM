@@ -1,9 +1,9 @@
 //(c) uARM project    https://github.com/uARM-Palm/uARM    uARM@dmitry.gr
 
+#include "palmoscalls.h"
 #include "gdbstub.h"
 #include <string.h>
 #include <stdlib.h>
-#include "palmos.h"
 #include "icache.h"
 #include "cp15.h"
 #include "util.h"

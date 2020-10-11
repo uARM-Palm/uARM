@@ -1,6 +1,6 @@
 //(c) uARM project    https://github.com/uARM-Palm/uARM    uARM@dmitry.gr
 
-#include "palmos.h"
+#include "palmoscalls.h"
 #include <stdio.h>
 
 struct OsCall {
