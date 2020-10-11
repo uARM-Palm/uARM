@@ -79,7 +79,7 @@ static void socI2cPrvRecalcIrq(struct SocI2c *i2c)
 
 static uint_fast8_t socI2cPrvAction(struct SocI2c *i2c, enum ActionI2C action, uint8_t param)
 {
-	static const char *acts[] = {
+	static const char *const acts[] = {
 		[i2cStart] = "start",
 		[i2cRestart] = "restart",
 		[i2cTx] = "tx",

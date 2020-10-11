@@ -66,6 +66,7 @@ struct SoC {
 	struct SocDma *dma;
 	struct SocI2c *i2c; 
 	struct SocIc *ic;
+	bool mouseDown;
 
 	struct ArmRam *sram;
 	struct ArmRam *ram;
@@ -380,7 +381,6 @@ void socRun(struct SoC* soc)
 	
 		if (!(cycles & 0x00FFFFUL)) {
 			
-			static bool mouseDown = false;
 			SDL_Event event;
 			
 			if (SDL_PollEvent(&event)) switch (event.type) {
@@ -393,19 +393,19 @@ void socRun(struct SoC* soc)
 				case SDL_MOUSEBUTTONDOWN:
 					if (event.button.button != SDL_BUTTON_LEFT)
 						break;
-					mouseDown = true;
+					soc->mouseDown = true;
 					deviceTouch(soc->dev, event.button.x, event.button.y);
 					break;
 				
 				case SDL_MOUSEBUTTONUP:
 					if (event.button.button != SDL_BUTTON_LEFT)
 						break;
-					mouseDown = false;
+					soc->mouseDown = false;
 					deviceTouch(soc->dev, -1, -1);
 					break;
 				
 				case SDL_MOUSEMOTION:
-					if (!mouseDown)
+					if (!soc->mouseDown)
 						break;
 					deviceTouch(soc->dev, event.motion.x, event.motion.y);
 					break;
