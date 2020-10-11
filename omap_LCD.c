@@ -339,7 +339,7 @@ static bool omapLcdPrvDmaMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 	pa = (pa - OMAP_LCD_DMA_BASE) >> 1;
 	
 	if (write)
-		val = *(uint32_t*)buf;
+		val = *(uint16_t*)buf;
 	
 	if (!pa) {
 		
@@ -375,7 +375,7 @@ static bool omapLcdPrvDmaMemAccessF(void* userData, uint32_t pa, uint_fast8_t si
 
 	
 	if (!write)
-		*(uint32_t*)buf = val;
+		*(uint16_t*)buf = val;
 	
 	return true;
 }
