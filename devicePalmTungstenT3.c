@@ -8,9 +8,12 @@
 #include "util.h"
 
 
-static struct Tps65010 *mTps65010;
-static struct Tsc210x *mTsc2101;
-static struct W86L488 *mW86L488;
+struct Device {
+
+	struct Tps65010 *tps65010;
+	struct Tsc210x *tsc2101;
+	struct W86L488 *w86L488;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -32,18 +35,24 @@ uint_fast8_t deviceGetSocRev(void)
 	return 1; //PXA26x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
-	mTsc2101 = tsc210xInitSsp(sp->ssp, sp->gpio, 24, 37, TscType2101);
-	if (!mTsc2101)
+	struct Device *dev;
+	
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	dev->tsc2101 = tsc210xInitSsp(sp->ssp, sp->gpio, 24, 37, TscType2101);
+	if (!dev->tsc2101)
 		ERR("Cannot init TSC2101");
 	
-	mTps65010 = tps65010Init(sp->i2c);
-	if (!mTps65010)
+	dev->tps65010 = tps65010Init(sp->i2c);
+	if (!dev->tps65010)
 		ERR("Cannot init TPS65010");
 		
-	mW86L488 = w86l488init(sp->mem, sp->gpio, W86L488_BASE_T3, vsd, 8);
-	if (!mW86L488)
+	dev->w86L488 = w86l488init(sp->mem, sp->gpio, W86L488_BASE_T3, vsd, 8);
+	if (!dev->w86L488)
 		ERR("Cannot init W86L488");
 	
 	//on the T3: hwuart is the debug/logging/etc port
@@ -56,7 +65,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 14, true);			//TPS int?
 	
 	//full battery
-	tsc210xSetExtAdc(mTsc2101, TscExternalAdcBat1, 4100);
+	tsc210xSetExtAdc(dev->tsc2101, TscExternalAdcBat1, 4100);
 	
 	//keypad
 	if (!keypadAddGpioKey(kp, SDLK_HOME, 12, false))
@@ -99,15 +108,17 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		ERR("Cannot init select key\n");
 	
 	sp->dbgUart = sp->uarts[1];	//HWUART
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if(!(cycles & 0x00007FFFUL))
-		tsc210xPeriodic(mTsc2101);
+		tsc210xPeriodic(dev->tsc2101);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
 	//mimic values T|T3 adc actually produces
 	// as X coord varies from 0 to 319, ADC values go from 3728 to 300
@@ -116,10 +127,10 @@ void deviceTouch(int x, int y)
 	x = x >= 0 ? 300 + (319 - x) * 107 / 10 : x;
 	y = y >= 0 ? 153 + (479 - y) * 76 / 10 : y;
 	
-	tsc210xPenInput(mTsc2101, x, y);
+	tsc210xPenInput(dev->tsc2101, x, y);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

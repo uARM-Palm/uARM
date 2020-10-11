@@ -96,8 +96,11 @@
 		85		IN		0		
 */
 
-static struct WM9712L *mWM9712L;
-static struct DirectNAND *mNand;
+struct Device {
+	
+	struct WM9712L *wm9712L;
+	struct DirectNAND *nand;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -119,7 +122,7 @@ uint_fast8_t deviceGetSocRev(void)
 	return 0;		//PXA25x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
 	static const struct NandSpecs nandSpecs = {
 		.bytesPerPage = 528,
@@ -129,13 +132,18 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		.devIdLen = 2,
 		.devId = {0xec, 0x75},
 	};
+	struct Device *dev;
 	
-	mWM9712L = wm9712LInit(sp->ac97, sp->gpio, 50);
-	if (!mWM9712L)
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	dev->wm9712L = wm9712LInit(sp->ac97, sp->gpio, 50);
+	if (!dev->wm9712L)
 		ERR("Cannot init WM9712L");
 		
-	mNand = directNandInit(sp->mem, 0x04000002UL, 0x04000004UL, 0x04000000UL, 0x00fffff9ul, sp->gpio, 79, &nandSpecs, nandFile);
-	if (!mNand)
+	dev->nand = directNandInit(sp->mem, 0x04000002UL, 0x04000004UL, 0x04000000UL, 0x00fffff9ul, sp->gpio, 79, &nandSpecs, nandFile);
+	if (!dev->nand)
 		ERR("Cannot init NAND");
 	
 	if (!keypadAddGpioKey(kp, SDLK_F1, 11, false))
@@ -178,28 +186,30 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	
 	socGpioSetState(sp->gpio, 52, true);		//no manufacturing test mode please
 	
-	wm9712LsetAuxVoltage(mWM9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
+	wm9712LsetAuxVoltage(dev->wm9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
 	
 	socGpioSetState(sp->gpio, 10, !vsd);
 	
 	sp->dbgUart = sp->uarts[1];	//HWUART
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x000007FFUL))
-		wm9712Lperiodic(mWM9712L);
+		wm9712Lperiodic(dev->wm9712L);
 	
 	if (!(cycles & 0x000000FFUL))
-		directNandPeriodic(mNand);
+		directNandPeriodic(dev->nand);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	wm9712LsetPen(mWM9712L, (x >= 0 && y >= 0) ? 280 + 173 * x / 16 : -1, (x >= 0 && y >= 0) ? 210 + 134 * y / 16 : y, 1000);
+	wm9712LsetPen(dev->wm9712L, (x >= 0 && y >= 0) ? 280 + 173 * x / 16 : -1, (x >= 0 && y >= 0) ? 210 + 134 * y / 16 : y, 1000);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

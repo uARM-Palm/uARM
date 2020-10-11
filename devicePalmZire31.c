@@ -90,7 +90,10 @@
 	80		OUT	LO	0		
 */
 
-static struct WM9712L *mWM9712L;
+struct Device {
+
+	struct WM9712L *wm9712L;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -112,10 +115,16 @@ uint_fast8_t deviceGetSocRev(void)
 	return 0;	//PXA25x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
-	mWM9712L = wm9712LInit(sp->ac97, sp->gpio, 50);
-	if (!mWM9712L)
+	struct Device *dev;
+	
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+
+	dev->wm9712L = wm9712LInit(sp->ac97, sp->gpio, 50);
+	if (!dev->wm9712L)
 		ERR("Cannot init WM9712L");
 	
 	if (!keypadAddGpioKey(kp, SDLK_F1, 13, false))
@@ -142,7 +151,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	if (!keypadAddGpioKey(kp, SDLK_ESCAPE, 2, false))
 		ERR("Cannot init power key\n");
 	
-	wm9712LsetAuxVoltage(mWM9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
+	wm9712LsetAuxVoltage(dev->wm9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
 	
 	socGpioSetState(sp->gpio, 1, true);	//reset button
 	socGpioSetState(sp->gpio, 7, false);	//no usb
@@ -152,20 +161,22 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 40, true);	//no hotsync button pressed
 
 	sp->dbgUart = sp->uarts[0];	//FFUART
+
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x000007FFUL))
-		wm9712Lperiodic(mWM9712L);
+		wm9712Lperiodic(dev->wm9712L);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	wm9712LsetPen(mWM9712L, (x >= 0 && y >= 0) ? 320 + 18 * x : -1, (x >= 0 && y >= 0) ? 3800 - 16 * y : y, 1000);
+	wm9712LsetPen(dev->wm9712L, (x >= 0 && y >= 0) ? 320 + 18 * x : -1, (x >= 0 && y >= 0) ? 3800 - 16 * y : y, 1000);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

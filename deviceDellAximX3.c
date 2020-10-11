@@ -8,10 +8,13 @@
 #include "util.h"
 #include "ROM.h"
 
-static struct ArmRom *mSecondFlashChip;
-static struct AximX3cpld *mCPLD;
-static struct W86L488 *mW86L488;
-static struct WM9705 *mWM9705;
+struct Device {
+	
+	struct ArmRom *secondFlashChip;
+	struct AximX3cpld *CPLD;
+	struct W86L488 *w86L488;
+	struct WM9705 *wm9705;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -33,25 +36,30 @@ uint_fast8_t deviceGetSocRev(void)
 	return 1;	//PXA26x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
 	uint32_t romPieceSize = 32UL << 20;
 	void *romPiece = malloc(romPieceSize);
+	struct Device *dev;
 	
-	mSecondFlashChip = romInit(sp->mem, 0x04000000UL, &romPiece, &romPieceSize, 1, RomStrataflash16x2x);
-	if (!mSecondFlashChip)
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	dev->secondFlashChip = romInit(sp->mem, 0x04000000UL, &romPiece, &romPieceSize, 1, RomStrataflash16x2x);
+	if (!dev->secondFlashChip)
 		ERR("Cannot init axim's second flash chip");
 	
-	mWM9705 = wm9705Init(sp->ac97);
-	if (!mWM9705)
+	dev->wm9705 = wm9705Init(sp->ac97);
+	if (!dev->wm9705)
 		ERR("Cannot init WM9705");
 	
-	mW86L488 = w86l488init(sp->mem, sp->gpio, W86L488_BASE_AXIM, vsd, 8);
-	if (!mW86L488)
+	dev->w86L488 = w86l488init(sp->mem, sp->gpio, W86L488_BASE_AXIM, vsd, 8);
+	if (!dev->w86L488)
 		ERR("Cannot init W86L488");
 	
-	mCPLD = aximX3cpldInit(sp->mem);
-	if (!mCPLD)
+	dev->CPLD = aximX3cpldInit(sp->mem);
+	if (!dev->CPLD)
 		ERR("Cannot init AXIM's CPLD");
 	
 	if (!keypadAddGpioKey(kp, SDLK_ESCAPE, 0, false))
@@ -112,26 +120,27 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 62, true);
 	socGpioSetState(sp->gpio, 63, true);
 	
-	wm9705setAuxVoltage(mWM9705, WM9705auxPinBmon, 4200 / 3);		//main battery is 4.2V
-	wm9705setAuxVoltage(mWM9705, WM9705auxPinAux, 1200);			//secondary battery is 1.2V
-	wm9705setAuxVoltage(mWM9705, WM9705auxPinPhone, 1900);			//main battery temp is 10 degrees C
+	wm9705setAuxVoltage(dev->wm9705, WM9705auxPinBmon, 4200 / 3);		//main battery is 4.2V
+	wm9705setAuxVoltage(dev->wm9705, WM9705auxPinAux, 1200);			//secondary battery is 1.2V
+	wm9705setAuxVoltage(dev->wm9705, WM9705auxPinPhone, 1900);			//main battery temp is 10 degrees C
 	
 	sp->dbgUart = sp->uarts[0];	//FFUART
 	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x0000007FUL))
-		wm9705periodic(mWM9705);
+		wm9705periodic(dev->wm9705);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	wm9705setPen(mWM9705, (x >= 0 && y >= 0) ? 3930 - 15 * x : -1, (x >= 0 && y >= 0) ? 3864 - 11 * y : -1, 1000);
+	wm9705setPen(dev->wm9705, (x >= 0 && y >= 0) ? 3930 - 15 * x : -1, (x >= 0 && y >= 0) ? 3864 - 11 * y : -1, 1000);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

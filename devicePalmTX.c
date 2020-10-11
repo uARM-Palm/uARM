@@ -15,10 +15,13 @@
 
 */
 
-static struct TxNoRamMarker *mNoRamMarker;
-static struct DirectNAND *mNand;
-static struct WM9712L *mWM9712L;
-static struct PxaKpc *mKpc;
+struct Device {
+	
+	struct TxNoRamMarker *noRamMarker;
+	struct DirectNAND *nand;
+	struct WM9712L *wm9712L;
+	struct PxaKpc *kpc;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -40,7 +43,7 @@ uint_fast8_t deviceGetSocRev(void)
 	return 2;	//PXA27x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
 	static const struct NandSpecs nandSpecs = {
 		.bytesPerPage = 2112,
@@ -50,25 +53,30 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		.devIdLen = 5,
 		.devId = {0xec, 0xf1, 0x00, 0x95, 0x40},
 	};
+	struct Device *dev;
 	
-	mKpc = (struct PxaKpc*)sp->kpc;
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
 	
-	mNand = directNandInit(sp->mem, 0x06000000ul, 0x05000000ul, 0x04000000ul, 0x00fffffful, sp->gpio, 18, &nandSpecs, nandFile);
-	if (!mNand)
+	dev->kpc = (struct PxaKpc*)sp->kpc;
+	
+	dev->nand = directNandInit(sp->mem, 0x06000000ul, 0x05000000ul, 0x04000000ul, 0x00fffffful, sp->gpio, 18, &nandSpecs, nandFile);
+	if (!dev->nand)
 		ERR("Cannot init NAND");
 	
-	mNoRamMarker = txNoRamMarkerInit(sp->mem);
-	if (!mNoRamMarker)
+	dev->noRamMarker = txNoRamMarkerInit(sp->mem);
+	if (!dev->noRamMarker)
 		ERR("Cannot init 'NO RAM HERE' MARKER");
 	
-	mWM9712L = wm9712LInit(sp->ac97, sp->gpio, 39);
-	if (!mWM9712L)
+	dev->wm9712L = wm9712LInit(sp->ac97, sp->gpio, 39);
+	if (!dev->wm9712L)
 		ERR("Cannot init WM9712L");
 	
 	if (!keypadAddGpioKey(kp, SDLK_ESCAPE, 0, false))
 		ERR("Cannot init power key\n");
 	
-	wm9712LsetAuxVoltage(mWM9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
+	wm9712LsetAuxVoltage(dev->wm9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
 	
 	socGpioSetState(sp->gpio, 0, true);		//battery high
 	socGpioSetState(sp->gpio, 1, true);		//reset button
@@ -77,23 +85,25 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	
 	socGpioSetState(sp->gpio, 37, true);		//no manufacturing test mode please
 	socGpioSetState(sp->gpio, 90, true);		//no USB inserted
+
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x000007FFUL))
-		wm9712Lperiodic(mWM9712L);
+		wm9712Lperiodic(dev->wm9712L);
 	
 	if (!(cycles & 0x000000FFUL))
-		directNandPeriodic(mNand);
+		directNandPeriodic(dev->nand);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	wm9712LsetPen(mWM9712L, (x >= 0) ? 320 + 9 * x : -1, (y >= 0) ? 3800 - 8 * y : y, 1000);
+	wm9712LsetPen(dev->wm9712L, (x >= 0) ? 320 + 9 * x : -1, (y >= 0) ? 3800 - 8 * y : y, 1000);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	static const uint32_t map[3][4] = {
 		{SDLK_ESCAPE /* power*/, SDLK_F2 /* h2 = cal */, SDLK_UP, SDLK_RIGHT},
@@ -105,7 +115,7 @@ void deviceKey(uint32_t key, bool down)
 	for (c = 0; c < 3; c++) {
 		for (r = 0; r < 4; r++) {
 			if (map[c][r] == key) {
-				pxaKpcMatrixKeyChange(mKpc, r, c, down);
+				pxaKpcMatrixKeyChange(dev->kpc, r, c, down);
 				return;
 			}
 		}

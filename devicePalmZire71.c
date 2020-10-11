@@ -10,8 +10,10 @@
 
 */
 
-static struct Ads7846 *mAds7846;
-static struct ArmRam *mWeirdBusAccess;
+struct Device {
+	
+	struct Ads7846 *ads7846;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -33,12 +35,18 @@ uint_fast8_t deviceGetSocRev(void)
 	return 0;
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
+	struct ArmRam *weirdBusAccess;
+	struct Device *dev;
 	uint_fast8_t i;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
-	if (!mWeirdBusAccess)
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	weirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
+	if (!weirdBusAccess)
 		ERR("Cannot init RAM4");
 	
 	for (i = 0; i < 2; i++) {
@@ -50,8 +58,8 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 			ERR("Cannot init keypad row %u as gpio %u", i, 40 + i);
 	}
 	
-	mAds7846 = ads7846init(sp->uw, 0, sp->gpio, 6);
-	if (!mAds7846)
+	dev->ads7846 = ads7846init(sp->uw, 0, sp->gpio, 6);
+	if (!dev->ads7846)
 		ERR("Cannot init ADS7846");
 
 	//shared 0: Vusb active high
@@ -91,15 +99,17 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		ERR("Cannot init up key\n");
 	
 	//battery is full
-	ads7846setAdc(mAds7846, Ads7846auxTypeBatt, 4100);
+	ads7846setAdc(dev->ads7846, Ads7846auxTypeBatt, 4100);
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
 	uint16_t z = (x >= 0 && y >= 0) ? 2048 : 0;
 	uint16_t adcX, adcY;
@@ -107,10 +117,10 @@ void deviceTouch(int x, int y)
 	adcX = 3570 - x * 175 / 20;
 	adcY = 274 + y * 158 / 20;
 	
-	ads7846penInput(mAds7846, adcX, adcY, z);
+	ads7846penInput(dev->ads7846, adcX, adcY, z);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

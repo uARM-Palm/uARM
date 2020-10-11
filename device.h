@@ -44,20 +44,19 @@ struct SocPeriphs {
 };
 
 
+struct Device;
 
-
+//simple queries
 bool deviceHasGrafArea(void);
-
 uint32_t deviceGetRamSize(void);
-
 enum RomChipType deviceGetRomMemType(void);
-
 uint_fast8_t deviceGetSocRev(void);
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile);
-void deviceKey(uint32_t key, bool down);
-void devicePeriodic(uint32_t cycles);
-void deviceTouch(int x, int y);
+//device handling
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile);
+void deviceKey(struct Device *dev, uint32_t key, bool down);
+void devicePeriodic(struct Device *dev, uint32_t cycles);
+void deviceTouch(struct Device *dev, int x, int y);
 
 
 

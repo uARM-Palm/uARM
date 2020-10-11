@@ -24,8 +24,10 @@
 	
 */
 
-static struct ArmRam *mWeirdBusAccess;
-static struct Ads7846 *mAds7846;
+struct Device {
+	
+	struct Ads7846 *ads7846;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -47,12 +49,18 @@ uint_fast8_t deviceGetSocRev(void)
 	return 1;		//omap with DSP
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
+	struct ArmRam *weirdBusAccess;
+	struct Device *dev;
 	uint_fast8_t i;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
-	if (!mWeirdBusAccess)
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	weirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
+	if (!weirdBusAccess)
 		ERR("Cannot init RAM4");
 	
 	for (i = 0; i < 3; i++) {
@@ -65,8 +73,8 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	}
 	
 	//shared 0 is pen detect
-	mAds7846 = ads7846init(sp->uw, 0, sp->gpio, 6);
-	if (!mAds7846)
+	dev->ads7846 = ads7846init(sp->uw, 0, sp->gpio, 6);
+	if (!dev->ads7846)
 		ERR("Cannot init ADS7846");
 	
 	
@@ -93,7 +101,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 16 + 3, true);
 	
 	//battery is full
-	ads7846setAdc(mAds7846, Ads7846auxTypeBatt, 4100);
+	ads7846setAdc(dev->ads7846, Ads7846auxTypeBatt, 4100);
 	
 	//keys
 	if (!keypadAddMatrixKey(kp, SDLK_F1, 0, 0))
@@ -128,14 +136,16 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	
 	if (!keypadAddMatrixKey(kp, SDLK_RETURN, 4, 0))
 		ERR("Cannot init select key\n");
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
 	uint16_t z = (x >= 0 && y >= 0) ? 2048 : 0;
 	uint16_t adcX, adcY;
@@ -143,10 +153,10 @@ void deviceTouch(int x, int y)
 	adcX = 3570 - x * 175 / 20;
 	adcY = 3750 - y * 158 / 20;
 	
-	ads7846penInput(mAds7846, adcX, adcY, z);
+	ads7846penInput(dev->ads7846, adcX, adcY, z);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

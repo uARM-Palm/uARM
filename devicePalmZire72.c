@@ -135,8 +135,10 @@
 
 */
 
-static struct ArmRam *mWeirdBusAccess;			//likely for d-cache cleaning
-static struct WM9712L *mWM9712L;
+struct Device {
+	
+	struct WM9712L *wm9712L;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -158,38 +160,47 @@ uint_fast8_t deviceGetSocRev(void)
 	return 2;	//PXA27x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
-	mWeirdBusAccess = ramInit(sp->mem, 0x04090000ul, 0x40, (uint32_t*)malloc(0x40));
-	if (!mWeirdBusAccess)
+	struct ArmRam *weirdBusAccess;			//likely for d-cache cleaning
+	struct Device *dev;
+	
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	weirdBusAccess = ramInit(sp->mem, 0x04090000ul, 0x40, (uint32_t*)malloc(0x40));
+	if (!weirdBusAccess)
 		ERR("Cannot init RAM4");
 		
-	mWM9712L = wm9712LInit(sp->ac97, sp->gpio, 27);
-	if (!mWM9712L)
+	dev->wm9712L = wm9712LInit(sp->ac97, sp->gpio, 27);
+	if (!dev->wm9712L)
 		ERR("Cannot init WM9712L");
 	
 	if (!keypadAddGpioKey(kp, SDLK_ESCAPE, 0, false))
 		ERR("Cannot init power key\n");
 	
-	wm9712LsetAuxVoltage(mWM9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
+	wm9712LsetAuxVoltage(dev->wm9712L, WM9712LauxPinBmon, 4200 / 3);		//main battery is 4.2V
 	
 	socGpioSetState(sp->gpio, 1, true);		//reset button
 	socGpioSetState(sp->gpio, 14, !vsd);	//sd card?
 	socGpioSetState(sp->gpio, 37, true);	//tell MfgTestExt that this is not a factory test rig
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x000007FFUL))
-		wm9712Lperiodic(mWM9712L);
+		wm9712Lperiodic(dev->wm9712L);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	wm9712LsetPen(mWM9712L, (x >= 0) ? 320 + 9 * x : -1, (y >= 0) ? 3800 - 8 * y : y, 1000);
+	wm9712LsetPen(dev->wm9712L, (x >= 0) ? 320 + 9 * x : -1, (y >= 0) ? 3800 - 8 * y : y, 1000);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

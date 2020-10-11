@@ -46,10 +46,10 @@
 
 ////touch lef tot right is cb to 32d. top to bottom is 370 to 085
 
-
-static struct ArmRam *mWeirdBusAccess;			//likely for d-cache cleaning
-static struct S3C24xxAdc *mAdc;
-static struct NAND *mNand;
+struct Device {
+	struct S3C24xxAdc *adc;
+	struct NAND *nand;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -78,7 +78,7 @@ static void pda32nandPrvReady(void *userData, bool ready)
 	socGpioSetState(gpio, 161, ready);
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
 	static const struct NandSpecs nandSpecs = {
 		.bytesPerPage = 2112,
@@ -88,12 +88,17 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		.devIdLen = 5,
 		.devId = {0xec, 0xf1, 0x00, 0x95, 0x40},
 	};
+	struct ArmRam *weirdBusAccess;
+	struct Device *dev;
 	
-	mNand = nandInit(nandFile, &nandSpecs, pda32nandPrvReady, sp->gpio);
-	sp->nand = mNand;
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0xa0000000ul, 0x800, (uint32_t*)malloc(0x800));
-	if (!mWeirdBusAccess)
+	sp->nand = dev->nand = nandInit(nandFile, &nandSpecs, pda32nandPrvReady, sp->gpio);
+	
+	weirdBusAccess = ramInit(sp->mem, 0xa0000000ul, 0x800, (uint32_t*)malloc(0x800));
+	if (!weirdBusAccess)
 		ERR("Cannot init RAM4");
 	
 	//NAND config
@@ -135,25 +140,27 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	if (!keypadAddGpioKey(kp, SDLK_F12, 113, true))	//reset button
 		ERR("Cannot init reset key\n");
 	
-	mAdc = (struct S3C24xxAdc*)sp->adc;
+	dev->adc = (struct S3C24xxAdc*)sp->adc;
 	
 	//battery is nearly full. device uses AIN0, 1:3.2 scale
-	s3c24xxAdcSetAuxAdc(mAdc, 0, 4100UL * 10 / 32);
+	s3c24xxAdcSetAuxAdc(dev->adc, 0, 4100UL * 10 / 32);
 
-	socBootload(sp->soc, 2048 | 0xc0000000ul, mNand);			//PDA32 boots from NAND directly
+	socBootload(sp->soc, 2048 | 0xc0000000ul, dev->nand);			//PDA32 boots from NAND directly
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	s3c24xxAdcSetPenPos(mAdc, x >= 0 ? 85 + 2 * x : x, y >= 0 ? 780 - 14 * y / 10 : y);
+	s3c24xxAdcSetPenPos(dev->adc, x >= 0 ? 85 + 2 * x : x, y >= 0 ? 780 - 14 * y / 10 : y);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

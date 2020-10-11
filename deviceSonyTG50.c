@@ -223,12 +223,15 @@ unlisted in prio map but existing:
 	
 */
 
-static struct MemoryStickController *mMsc;
-static struct ArmRam *mUnknownSram;
-static struct An32502A *mAn32502A;
-static struct Ad7873 *mAd7873;
-static struct AK4534 *mAk4534;
-static struct TG50uc *mUc;
+
+
+struct Device {
+	struct MemoryStickController *msc;
+	struct An32502A *an32502A;
+	struct Ad7873 *ad7873;
+	struct AK4534 *ak4534;
+	struct TG50uc *uc;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -250,9 +253,9 @@ uint_fast8_t deviceGetSocRev(void)
 	return 0;	//PXA25x
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
-	static uint32_t keyMap[] = {
+	static const uint32_t keyMap[] = {
 		SDLK_ESCAPE, SDLK_F1, SDLK_F2, 0, SDLK_F3, 0, SDLK_F4, SDLK_F5,
 		SDLK_PAGEUP, SDLK_PAGEDOWN, SDLK_HOME, SDLK_END /* jog back */, 0, SDLK_F11/* jog sel */, SDLK_BACKQUOTE /* grafiti icon */, 0,
 		SDLK_q, SDLK_CAPSLOCK, SDLK_w, SDLK_e, SDLK_r, SDLK_t, SDLK_h, 0,
@@ -262,30 +265,36 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		SDLK_n, SDLK_F7 /* blue shift key */, SDLK_m, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_DOWN, 0,
 		SDLK_SPACE, SDLK_F9 /* red shift key */, SDLK_UNDERSCORE, SDLK_LEFT, SDLK_RIGHT, SDLK_RETURN, SDLK_BACKSPACE, 0,
 	};
+	struct ArmRam *unknownSram;
+	struct Device *dev;
+	
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
 	
 	//gpio24 is AD7873 chip select (active low) in gpio mode (or SSPFRM mode)
-	mAd7873 = ad7873Init(sp->ssp, sp->gpio, 9);
-	if (!mAd7873)
+	dev->ad7873 = ad7873Init(sp->ssp, sp->gpio, 9);
+	if (!dev->ad7873)
 		ERR("Cannot init AD7873");
 	
-	mAk4534 = ak4534Init(sp->i2c, sp->i2s, sp->gpio);
-	if (!mAk4534)
+	dev->ak4534 = ak4534Init(sp->i2c, sp->i2s, sp->gpio);
+	if (!dev->ak4534)
 		ERR("Cannot init AK4534");
 	
-	mAn32502A = an32502aInit(sp->i2c);
-	if (!mAn32502A)
+	dev->an32502A = an32502aInit(sp->i2c);
+	if (!dev->an32502A)
 		ERR("Cannot init AN32502A");
 	
-	mUc = tg50ucInit(sp->mem, sp->gpio, 14, keyMap);
-	if (!mUc)
+	dev->uc = tg50ucInit(sp->mem, sp->gpio, 14, keyMap);
+	if (!dev->uc)
 		ERR("Cannot init TG50's UC");
 	
-	mMsc = msCtrlrInit(sp->mem, 0x14000000ul);
-	if (!mMsc)
+	dev->msc = msCtrlrInit(sp->mem, 0x14000000ul);
+	if (!dev->msc)
 		ERR("Cannot init MSC");
 	
-	mUnknownSram = ramInit(sp->mem, 0xac000000ul, 1024, (uint32_t*)malloc(1024));
-	if (!mUnknownSram)
+	unknownSram = ramInit(sp->mem, 0xac000000ul, 1024, (uint32_t*)malloc(1024));
+	if (!unknownSram)
 		ERR("Cannot init RAM4");
 	
 	if (!keypadAddGpioKey(kp, SDLK_ESCAPE, 0, false))
@@ -299,23 +308,25 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 10, true);	//tg50 MS IP not interrupting
 	socGpioSetState(sp->gpio, 13, true);	//tg50 UC not interrupting
 	
-	ad7873setVbatt(mAd7873, 4200);			//battery is full
+	ad7873setVbatt(dev->ad7873, 4200);			//battery is full
 	
 	sp->dbgUart = sp->uarts[2];	//FFUART
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if (!(cycles & 0x00007FFFUL))
-		ad7873Periodic(mAd7873);
+		ad7873Periodic(dev->ad7873);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
-	ad7873PenInput(mAd7873, (x >= 0 && y >= 0) ? 3200 - 10 * x : -1, (x >= 0 && y >= 0) ? 3200 - 10 * y : -1);
+	ad7873PenInput(dev->ad7873, (x >= 0 && y >= 0) ? 3200 - 10 * x : -1, (x >= 0 && y >= 0) ? 3200 - 10 * y : -1);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
-	tg50ucSetKeyPressed(mUc, key, down);
+	tg50ucSetKeyPressed(dev->uc, key, down);
 }

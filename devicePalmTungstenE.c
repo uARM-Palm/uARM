@@ -23,8 +23,10 @@
 	
 */
 
-static struct ArmRam *mWeirdBusAccess;
-static struct Tsc210x *mTsc210x;
+struct Device {
+	
+	struct Tsc210x *tsc210x;
+};
 
 bool deviceHasGrafArea(void)
 {
@@ -46,17 +48,23 @@ uint_fast8_t deviceGetSocRev(void)
 	return 0;
 }
 
-void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
+struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE* nandFile)
 {
+	struct ArmRam *weirdBusAccess;
+	struct Device *dev;
 	uint_fast8_t i;
 	
-	mWeirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
-	if (!mWeirdBusAccess)
+	dev = (struct Device*)malloc(sizeof(*dev));
+	if (!dev)
+		ERR("cannot alloc device");
+	
+	weirdBusAccess = ramInit(sp->mem, 0x08000000ul, 0x280, (uint32_t*)malloc(0x280));
+	if (!weirdBusAccess)
 		ERR("Cannot init RAM4");
 	
 	//PINTDAV is gpio shared 6
-	mTsc210x = tsc210xInitUWire(sp->uw, 0, sp->gpio, 6, TscType2102);
-	if (!mTsc210x)
+	dev->tsc210x = tsc210xInitUWire(sp->uw, 0, sp->gpio, 6, TscType2102);
+	if (!dev->tsc210x)
 		ERR("Cannot init TSC2102");
 	
 	for (i = 0; i < 2; i++) {
@@ -67,7 +75,6 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 		if (!keypadDefineRow(kp, i, 40 + i))
 			ERR("Cannot init keypad row %u as gpio %u", i, 40 + i);
 	}
-	
 	
 	//shared 0: Vusb active high
 	socGpioSetState(sp->gpio, 0, false);
@@ -88,7 +95,7 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	socGpioSetState(sp->gpio, 16 + 4, !vsd);
 	
 	//full battery
-	tsc210xSetExtAdc(mTsc210x, TscExternalAdcBat1, 4200);
+	tsc210xSetExtAdc(dev->tsc210x, TscExternalAdcBat1, 4200);
 	
 	//keys
 	if (!keypadAddMatrixKey(kp, SDLK_F1, 0, 0))
@@ -120,23 +127,25 @@ void deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD *vsd, FILE
 	
 	if (!keypadAddMatrixKey(kp, SDLK_RETURN, 4, 1))
 		ERR("Cannot init select key\n");
+	
+	return dev;
 }
 
-void devicePeriodic(uint32_t cycles)
+void devicePeriodic(struct Device *dev, uint32_t cycles)
 {
 	if(!(cycles & 0x00007FFFUL))
-		tsc210xPeriodic(mTsc210x);
+		tsc210xPeriodic(dev->tsc210x);
 }
 
-void deviceTouch(int x, int y)
+void deviceTouch(struct Device *dev, int x, int y)
 {
 	x = x >= 0 ? 966 - x * 28 / 10 : x;
 	y = y >= 0 ? 31 + 22 * y / 10 : y;
 	
-	tsc210xPenInput(mTsc210x, x, y);
+	tsc210xPenInput(dev->tsc210x, x, y);
 }
 
-void deviceKey(uint32_t key, bool down)
+void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
 	//nothing
 }

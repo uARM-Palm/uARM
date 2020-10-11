@@ -103,6 +103,8 @@ struct SoC {
 	struct ArmCpu *cpu;
 	struct Keypad *kp;
 	struct VSD *vSD;
+	
+	struct Device *dev;
 };
 
 
@@ -348,7 +350,9 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (socRev == 2)
 		sp.kpc = soc->kpc;
 	
-	deviceSetup(&sp, soc->kp, soc->vSD, nandFile);
+	soc->dev = deviceSetup(&sp, soc->kp, soc->vSD, nandFile);
+	if (!soc->dev)
+		ERR("Cannot init device\n");
 	
 	if (sp.dbgUart)
 		socUartSetFuncs(sp.dbgUart, socUartPrvRead, socUartPrvWrite, soc->hwUart);
@@ -433,7 +437,7 @@ void socRun(struct SoC* soc)
 			socUartProcess(soc->btUart);
 		}
 		
-		devicePeriodic(cycles);
+		devicePeriodic(soc->dev, cycles);
 	
 		if (!(cycles & 0x0001FFFUL))
 			pxaLcdFrame(soc->lcd);
@@ -455,31 +459,31 @@ void socRun(struct SoC* soc)
 					if (event.button.button != SDL_BUTTON_LEFT)
 						break;
 					mouseDown = true;
-					deviceTouch(event.button.x, event.button.y);
+					deviceTouch(soc->dev, event.button.x, event.button.y);
 					break;
 				
 				case SDL_MOUSEBUTTONUP:
 					if (event.button.button != SDL_BUTTON_LEFT)
 						break;
 					mouseDown = false;
-					deviceTouch(-1, -1);
+					deviceTouch(soc->dev, -1, -1);
 					break;
 				
 				case SDL_MOUSEMOTION:
 					if (!mouseDown)
 						break;
-					deviceTouch(event.motion.x, event.motion.y);
+					deviceTouch(soc->dev, event.motion.x, event.motion.y);
 					break;
 				
 				case SDL_KEYDOWN:
 				
-					deviceKey(event.key.keysym.sym, true);
+					deviceKey(soc->dev, event.key.keysym.sym, true);
 					keypadSdlKeyEvt(soc->kp, event.key.keysym.sym, true);
 					break;
 				
 				case SDL_KEYUP:
 				
-					deviceKey(event.key.keysym.sym, false);
+					deviceKey(soc->dev, event.key.keysym.sym, false);
 					keypadSdlKeyEvt(soc->kp, event.key.keysym.sym, false);
 					break;
 			}
