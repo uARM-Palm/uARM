@@ -178,8 +178,18 @@ bool icacheFetch(struct icache* ic, uint32_t va, uint_fast8_t sz, bool priviledg
 		
 	if (sz == 4)
 		*(uint32_t*)buf = *(uint32_t*)(line->data + off);
-	else if(sz == 2)
-		*(uint16_t*)buf = *(uint16_t*)(line->data + off);
+	else if (sz == 2) {
+		//icache reads in words, but code requests may come in halfwords
+		//on BE hosts this means we need to swap the order of halfwords
+		// (to unswap what he had already swapped)
+		#if __BYTE_ORDER == __BIG_ENDIAN
+			*(uint16_t*)buf = *(uint16_t*)(line->data + (off ^ 2));
+		#elif __BYTE_ORDER == __LITTLE_ENDIAN
+			*(uint16_t*)buf = *(uint16_t*)(line->data + off);
+		#else
+			#error "WTF"
+		#endif
+	}
 	else
 		memcpy(buf, line->data + off, sz);
 	
