@@ -13,7 +13,7 @@ CCFLAGS		= $(COMMON) -D_FILE_OFFSET_BITS=64 -DGDB_STUB_ENABLED -DSDL_ENABLED
 LDFLAGS		= $(COMMON) -lSDL2
 
 #main
-PROGRAM		+= main_pc.o CPU.o MMU.o cp15.o mem.o RAM.o ROM.o icache.o gdbstub.o vSD.o keys.o palmos.o
+PROGRAM		+= main_pc.o CPU.o MMU.o cp15.o mem.o RAM.o ROM.o icache.o gdbstub.o vSD.o keys.o palmoscalls.o
 
 #PXA2xx
 PXA2XX		+= socPXA.o pxa_IC.o pxa_MMC.o
