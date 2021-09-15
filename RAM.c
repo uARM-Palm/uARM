@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <endian.h>
+#include "endian.h"
 #include "util.h"
 #include "mem.h"
 #include "RAM.h"

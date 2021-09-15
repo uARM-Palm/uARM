@@ -8,7 +8,7 @@ LD	= gcc
 
 OPT			= -fomit-frame-pointer -momit-leaf-frame-pointer -Ofast -flto #--profile-use #--profile-generate
 #OPT			= -O2 -ffunction-sections -Wl,--gc-sections
-COMMON		= $(OPT) -g -ggdb -ggdb3 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable
+COMMON		= $(OPT) -g -ggdb -ggdb3 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable -Wno-constant-logical-operand
 CCFLAGS		= $(COMMON) -D_FILE_OFFSET_BITS=64 -DGDB_STUB_ENABLED -DSDL_ENABLED
 LDFLAGS		= $(COMMON) -lSDL2
 
