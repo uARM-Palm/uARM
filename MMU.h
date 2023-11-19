@@ -22,6 +22,8 @@ struct ArmMmu;
 
 
 struct ArmMmu* mmuInit(struct ArmMem *mem, bool xscaleMode);
+void mmuReset(struct ArmMmu *mmu);
+
 bool mmuTranslate(struct ArmMmu *mmu, uint32_t va, bool priviledged, bool write, uint32_t* paP, uint_fast8_t* fsrP, uint8_t *mappingInfoP);
 
 bool mmuIsOn(struct ArmMmu *mmu);

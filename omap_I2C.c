@@ -9,7 +9,6 @@
 #include "mem.h"
 
 
-#define OMAP_I2C_BASE	0xFFFB3800UL
 #define OMAP_I2C_SIZE	0x00000040UL
 
 
@@ -18,6 +17,8 @@ struct SocI2c {
 	//emu state
 	struct SocDma *dma;
 	struct SocIc *ic;
+	uint32_t base;
+	uint32_t irqNo;
 	struct DevI2C {
 		I2cDeviceActionF actF;
 		void *userData;
@@ -64,8 +65,8 @@ static void socI2cPrvRecalcIrq(struct SocI2c *i2c)
 	
 	if (newHighs & effectiveIe & 0x001f) {
 		//edge
-		socIcInt(i2c->ic, OMAP_I_I2C, true);
-		socIcInt(i2c->ic, OMAP_I_I2C, false);
+		socIcInt(i2c->ic, i2c->irqNo, true);
+		socIcInt(i2c->ic, i2c->irqNo, false);
 	}
 	
 	i2c->prevStat = i2c->stat;
@@ -262,7 +263,7 @@ static bool socI2cPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 		return false;
 	}
 	
-	pa = (pa - OMAP_I2C_BASE) >> 2;
+	pa = (pa - i2c->base) >> 2;
 	
 	if (write) switch (size) {
 		case 1:
@@ -422,7 +423,7 @@ static bool socI2cPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	return ret;
 }
 
-struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDma *dma)
+struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDma *dma, uint32_t base, uint32_t irqNo)
 {
 	struct SocI2c *i2c = (struct SocI2c*)malloc(sizeof(*i2c));
 	
@@ -432,10 +433,12 @@ struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDm
 	memset(i2c, 0, sizeof (*i2c));
 	i2c->dma = dma;
 	i2c->ic = ic;
+	i2c->base = base;
+	i2c->irqNo = irqNo;
 	socI2cPrvReset(i2c);
 	
-	if (!memRegionAdd(physMem, OMAP_I2C_BASE, OMAP_I2C_SIZE, socI2cPrvMemAccessF, i2c))
-		ERR("cannot add I2C to MEM\n");
+	if (!memRegionAdd(physMem, base, OMAP_I2C_SIZE, socI2cPrvMemAccessF, i2c))
+		ERR("cannot add I2C to MEM at 0x%08x\n", base);
 	
 	return i2c;
 }

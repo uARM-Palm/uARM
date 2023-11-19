@@ -30,6 +30,11 @@ uint32_t deviceGetRamSize(void)
 	return 16UL << 20;
 }
 
+enum RamTermination deviceGetRamTerminationStyle(void)
+{
+	return RamTerminationMirror;
+}
+
 uint_fast8_t deviceGetSocRev(void)
 {
 	return 0;

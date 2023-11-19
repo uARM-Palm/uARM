@@ -61,6 +61,8 @@ struct ArmCoprocessor{
 
 struct ArmCpu* cpuInit(uint32_t pc, struct ArmMem *mem, bool xscale, bool omap, int debugPort, uint32_t cpuid, uint32_t cacheId);
 
+void cpuReset(struct ArmCpu *cpu, uint32_t pc);
+
 void cpuCycle(struct ArmCpu *cpu);
 void cpuIrq(struct ArmCpu *cpu, bool fiq, bool raise);	//unraise when acknowledged
 

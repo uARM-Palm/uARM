@@ -814,8 +814,8 @@ static bool cpuPrvMemOp(struct ArmCpu *cpu, void* buf, uint32_t vaddr, uint_fast
 	if (cpuPrvMemOpEx(cpu, buf, vaddr, size, write, priviledged, fsrP, 0))
 		return true;
 	
-	fprintf(stderr, "%c of %u bytes to 0x%08lx failed!\n", (int)(write ? 'W' : 'R'), (unsigned)size, (unsigned long)vaddr);
-	gdbStubDebugBreakRequested(cpu->debugStub);
+//	fprintf(stderr, "%c of %u bytes to 0x%08lx failed!\n", (int)(write ? 'W' : 'R'), (unsigned)size, (unsigned long)vaddr);
+//	gdbStubDebugBreakRequested(cpu->debugStub);
 	
 	return false;
 }
@@ -2324,6 +2324,16 @@ undefined:
 	goto instr_execute;
 }
 
+void cpuReset(struct ArmCpu *cpu, uint32_t pc)
+{
+	cpu->I = true;	//start w/o interrupts in supervisor mode
+	cpu->F = true;
+	cpu->M = ARM_SR_MODE_SVC;
+	
+	cpuPrvSetPC(cpu, pc);
+	mmuReset(cpu->mmu);
+}
+
 struct ArmCpu* cpuInit(uint32_t pc, struct ArmMem *mem, bool xscale, bool omap, int debugPort, uint32_t cpuid, uint32_t cacheId)
 {
 	struct ArmCpu *cpu = (struct ArmCpu*)malloc(sizeof(*cpu));
@@ -2337,12 +2347,8 @@ struct ArmCpu* cpuInit(uint32_t pc, struct ArmMem *mem, bool xscale, bool omap, 
 	if (!cpu->debugStub)
 		ERR("Cannot init debug stub");
 	
-	cpu->I = true;	//start w/o interrupts in supervisor mode
-	cpu->F = true;
-	cpu->M = ARM_SR_MODE_SVC;
 	
 	cpu->mem = mem;
-	cpuPrvSetPC(cpu, pc);
 
 	cpu->mmu = mmuInit(mem, xscale);
 	if (!cpu->mmu)
@@ -2356,6 +2362,8 @@ struct ArmCpu* cpuInit(uint32_t pc, struct ArmMem *mem, bool xscale, bool omap, 
 	if (!cpu->mmu)
 		ERR("Cannot init CP15");
 
+	cpuReset(cpu, pc);
+	
 	return cpu;
 }
 

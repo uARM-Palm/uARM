@@ -9,7 +9,7 @@
 struct PxaPwrClk;
 
 
-struct PxaPwrClk* pxaPwrClkInit(struct ArmCpu *cpu, struct ArmMem *physMem);
+struct PxaPwrClk* pxaPwrClkInit(struct ArmCpu *cpu, struct ArmMem *physMem, bool isPXA270);
 
 
 

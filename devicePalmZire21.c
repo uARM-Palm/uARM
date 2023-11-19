@@ -1,6 +1,7 @@
 //(c) uARM project    https://github.com/uARM-Palm/uARM    uARM@dmitry.gr
 
 #include "uwiredev_ADS7846.h"
+#include <string.h>
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 #include "device.h"
@@ -103,6 +104,11 @@ enum RomChipType deviceGetRomMemType(void)
 uint32_t deviceGetRamSize(void)
 {
 	return 8UL << 20;
+}
+
+enum RamTermination deviceGetRamTerminationStyle(void)
+{
+	return RamTerminationMirror;
 }
 
 uint_fast8_t deviceGetSocRev(void)

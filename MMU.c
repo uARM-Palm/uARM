@@ -37,14 +37,15 @@ struct ArmMmu {
 
 void mmuTlbFlush(struct ArmMmu *mmu)
 {
-	uint_fast16_t i, j;
-	
-	for (i = 0; i < MMU_TLB_BUCKET_NUM; i++) {
-		for (j = 0; j < MMU_TLB_BUCKET_SIZE; j++)
-			mmu->tlb[i][j].sz = 0;
-		mmu->replPos[i] = 0;
-		mmu->readPos[i] = 0;
-	}	
+	memset(mmu->replPos, 0, sizeof(mmu->replPos));
+	memset(mmu->replPos, 0, sizeof(mmu->replPos));
+	memset(mmu->tlb, 0, sizeof(mmu->tlb));
+}
+
+void mmuReset(struct ArmMmu *mmu)
+{
+	mmu->transTablPA = MMU_DISABLED_TTP;
+	mmuTlbFlush(mmu);
 }
 
 struct ArmMmu* mmuInit(struct ArmMem *mem, bool xscaleMode)
@@ -56,9 +57,8 @@ struct ArmMmu* mmuInit(struct ArmMem *mem, bool xscaleMode)
 	
 	memset(mmu, 0, sizeof (*mmu));
 	mmu->mem = mem;
-	mmu->transTablPA = MMU_DISABLED_TTP;
 	mmu->xscale = xscaleMode;
-	mmuTlbFlush(mmu);
+	mmuReset(mmu);
 	
 	return mmu;
 }
@@ -97,10 +97,7 @@ bool mmuTranslate(struct ArmMmu *mmu, uint32_t adr, bool priviledged, bool write
 		
 		bucket = mmuPrvHashAddr(adr);
 				
-		for (j = 0, i = mmu->readPos[bucket]; j < MMU_TLB_BUCKET_SIZE; j++, i--) {
-			
-			if (i < 0)
-				i = MMU_TLB_BUCKET_SIZE - 1;
+		for (j = 0, i = mmu->readPos[bucket]; j < MMU_TLB_BUCKET_SIZE; j++, i = (i + MMU_TLB_BUCKET_SIZE - 1) % MMU_TLB_BUCKET_SIZE) {
 			
 			va = mmu->tlb[bucket][i].va;
 			sz = mmu->tlb[bucket][i].sz;

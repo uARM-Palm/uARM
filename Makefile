@@ -7,8 +7,10 @@ LD	= gcc
 
 
 OPT			= -fomit-frame-pointer -momit-leaf-frame-pointer -Ofast -flto #--profile-use #--profile-generate
-#OPT			= -O2 -ffunction-sections -Wl,--gc-sections
-COMMON		= $(OPT) -g -ggdb -ggdb3 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable -Wno-constant-logical-operand
+#OPT			= -O0 -ffunction-sections -Wl,--gc-sections
+
+
+COMMON		= $(OPT) -g -ggdb -ggdb3 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable
 CCFLAGS		= $(COMMON) -D_FILE_OFFSET_BITS=64 -DGDB_STUB_ENABLED -DSDL_ENABLED
 LDFLAGS		= $(COMMON) -lSDL2
 
@@ -40,7 +42,6 @@ S3C2410		+= $(S3C24XX) s3c2410_NAND.o
 S3C2440		+= $(S3C24XX) s3c2440_NAND.o
 
 #entirely broken devices
-#DEVICE		+= $(PXA2XX) devicePalmTungstenC.o ac97dev_WM9712L.o
 #DEVICE		+= $(OMAP) devicePalmTungstenT.o uwiredev_ADS7846.o
 
 #nonworking touch
@@ -52,16 +53,16 @@ S3C2440		+= $(S3C24XX) s3c2440_NAND.o
 #DEVICE		+= $(PXA2XX) deviceDellAximX3.o mmiodev_AximX3cpld.o mmiodev_W86L488.o ac97dev_WM9705.o -DSUPPORT_AXIM_PRINTF
 #DEVICE		+= $(OMAP) devicePalmZireXYZ.o sspdev_TSC210x.o
 #DEVICE		+= $(S3C2440) deviceAceecaPDA32.o nand.o
+#DEVICE		+= $(PXA2XX) devicePalmTungstenC.o ac97dev_UCB1400.o
 
 #working devices
-#DEVICE		+= $(PXA2XX) devicePalmTungstenT3.o sspdev_TSC210x.o i2cdev_TPS65010.o mmiodev_W86L488.o
+DEVICE		+= $(PXA2XX) devicePalmTungstenT3.o sspdev_TSC210x.o i2cdev_TPS65010.o mmiodev_W86L488.o
 #DEVICE		+= $(PXA2XX) devicePalmTungstenE2.o mmiodev_DirectNAND.o nand.o ac97dev_WM9712L.o
 #DEVICE		+= $(PXA2XX) devicePalmZire31.o ac97dev_WM9712L.o
 #DEVICE		+= $(PXA2XX) deviceSonyTG50.o mmiodev_TG50uc.o sspdev_AD7873.o mmiodev_MemoryStickController.o i2cdev_AN32502A.o i2sdev_AK4534.o
 #DEVICE		+= $(OMAP) devicePalmZire21.o uwiredev_ADS7846.o
 #DEVICE		+= $(OMAP) devicePalmZire71.o uwiredev_ADS7846.o
-DEVICE		+= $(S3C2410) devicePalmZ22.o nand.o
-
+#DEVICE		+= $(S3C2410) devicePalmZ22.o nand.o
 
 
 

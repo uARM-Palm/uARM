@@ -38,10 +38,12 @@
 
 
 
-#define ROM_BASE	0x00000000UL
-#define RAM_BASE	0x10000000UL
-#define SRAM_BASE	0x20000000UL
-#define SRAM_SIZE	0x00030000UL
+#define ROM_BASE		0x00000000UL
+#define RAM_BASE		0x10000000UL
+#define SRAM_BASE		0x20000000UL
+#define SRAM_SIZE		0x00030000UL
+
+#define OMAP_I2C_BASE	0xFFFB3800UL
 
 
 struct SoC {
@@ -70,7 +72,8 @@ struct SoC {
 
 	struct ArmRam *sram;
 	struct ArmRam *ram;
-	struct ArmRam *ramMirror;	//mirror
+	struct ArmRam *ramMirror;			//mirror for ram termination
+	struct ArmRom *ramWriteIgnore;		//write ignore for ram termination
 	struct ArmRom *rom;
 	struct ArmMem *mem;
 	struct ArmCpu *cpu;
@@ -177,6 +180,9 @@ static void socUartPrvWrite(uint_fast16_t chr, void* userData)
 struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t romNumPieces, uint32_t sdNumSectors, SdSectorR sdR, SdSectorW sdW, FILE *nandFile, int gdbPort, uint_fast8_t socRev)
 {
 	struct SoC *soc = (struct SoC*)malloc(sizeof(struct SoC));
+	static uint32_t romWriteIgnoreData[64] = {};
+	uint32_t romWriteIgnoreDataSz = sizeof(romWriteIgnoreData);;
+	void *romWriteIgnoreDataPtr = romWriteIgnoreData;
 	struct SocPeriphs sp;
 	uint32_t *ramBuffer;
 	uint32_t i;
@@ -209,10 +215,28 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if(!soc->ram)
 		ERR("Cannot init RAM");
 	
-	//ram mirror for rom probe code
-	soc->ramMirror = ramInit(soc->mem, RAM_BASE + deviceGetRamSize(), deviceGetRamSize(), ramBuffer);
-	if(!soc->ramMirror)
-		ERR("Cannot init RAM mirror");
+	switch (deviceGetRamTerminationStyle()) {
+		case RamTerminationMirror:
+	
+			//ram mirror for ram probe code
+			soc->ramMirror = ramInit(soc->mem, RAM_BASE + deviceGetRamSize(), deviceGetRamSize(), ramBuffer);
+			if (!soc->ramMirror)
+				ERR("Cannot init RAM mirror");
+			break;
+		
+		case RamTerminationWriteIgnore:
+			soc->ramWriteIgnore = romInit(soc->mem, RAM_BASE + deviceGetRamSize(), &romWriteIgnoreDataPtr, &romWriteIgnoreDataSz, 1, RomWriteIgnore);
+			if (!soc->ramWriteIgnore)
+				ERR("Cannot init RAM WI arwa");
+			break;
+		
+		case RamTerminationNone:
+			break;
+	
+		default:
+			__builtin_unreachable();
+			break;
+	}
 	
 	soc->rom = romInit(soc->mem, ROM_BASE, romPieces, romPieceSizes, romNumPieces, deviceGetRomMemType());
 	if(!soc->rom)
@@ -230,7 +254,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->gpio)
 		ERR("Cannot init OMAP's GPIO");
 	
-	soc->i2c = socI2cInit(soc->mem, soc->ic, soc->dma);
+	soc->i2c = socI2cInit(soc->mem, soc->ic, soc->dma, OMAP_I2C_BASE, OMAP_I_I2C);
 	if (!soc->i2c)
 		ERR("Cannot init OMAP's I2C");
 	

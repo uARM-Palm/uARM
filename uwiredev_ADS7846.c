@@ -135,7 +135,7 @@ static void ads7846prvRx(struct Ads7846 *ads, int_fast8_t numBitsGot, uint_fast1
 static uint_fast16_t ads7846prvTx(struct Ads7846 *ads, int_fast8_t numBitsReqd)
 {
 	uint_fast16_t ret = 0;
-	uint_fast8_t i;
+	int_fast8_t i;
 	
 	for (i = 0; i < numBitsReqd; i++) {
 		

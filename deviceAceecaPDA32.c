@@ -66,6 +66,11 @@ uint32_t deviceGetRamSize(void)
 	return 64UL << 20;
 }
 
+enum RamTermination deviceGetRamTerminationStyle(void)
+{
+	return RamTerminationMirror;
+}
+
 uint_fast8_t deviceGetSocRev(void)
 {
 	return 1;	//S3C2440

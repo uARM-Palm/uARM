@@ -43,12 +43,18 @@ struct SocPeriphs {
 	struct SocUart *dbgUart;
 };
 
+enum RamTermination {		//what's after ram in phys map? (some devices probe)
+	RamTerminationMirror,
+	RamTerminationWriteIgnore,
+	RamTerminationNone,
+};
 
 struct Device;
 
 //simple queries
 bool deviceHasGrafArea(void);
 uint32_t deviceGetRamSize(void);
+enum RamTermination deviceGetRamTerminationStyle(void);
 enum RomChipType deviceGetRomMemType(void);
 uint_fast8_t deviceGetSocRev(void);
 

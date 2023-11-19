@@ -5,7 +5,6 @@
 #include "icache.h"
 #include "util.h"
 #include "CPU.h"
-#include "endian.h"
 
 
 #define ICACHE_L		5	//line size is 2^L bytes
@@ -32,7 +31,7 @@ struct icache {
 
 	struct ArmMem* mem;
 	struct ArmMmu* mmu;
-
+	
 	struct icacheLine lines[ICACHE_BUCKET_NUM][ICACHE_BUCKET_SZ];
 	uint8_t ptr[ICACHE_BUCKET_NUM];
 };
@@ -41,7 +40,7 @@ struct icache {
 void icacheInval(struct icache *ic)
 {
 	uint_fast16_t i, j;
-
+	
 	for (i = 0; i < ICACHE_BUCKET_NUM; i++) {
 		for(j = 0; j < ICACHE_BUCKET_SZ; j++)
 			ic->lines[i][j].info = 0;
@@ -52,18 +51,18 @@ void icacheInval(struct icache *ic)
 struct icache* icacheInit(struct ArmMem* mem, struct ArmMmu *mmu)
 {
 	struct icache *ic = (struct icache*)malloc(sizeof(*ic));
-
+	
 	if (!ic)
 		ERR("cannot alloc icache");
-
+	
 	memset(ic, 0, sizeof (*ic));
-
+	
 	ic->mem = mem;
 	ic->mmu = mmu;
-
+	
 	icacheInval(ic);
-
-	return ic;
+	
+	return ic;	
 }
 
 static uint_fast16_t icachePrvHash(uint32_t addr)
@@ -79,17 +78,17 @@ void icacheInvalAddr(struct icache* ic, uint32_t va)
 	uint32_t off = va % ICACHE_LINE_SZ;
 	int_fast16_t i, j, bucket;
 	struct icacheLine *lines;
-
+	
 	va -= off;
 
 	bucket = icachePrvHash(va);
 	lines = ic->lines[bucket];
-
+	
 	for (i = 0, j = ic->ptr[bucket]; i < ICACHE_BUCKET_SZ; i++) {
-
+		
 		if (--j == -1)
 			j = ICACHE_BUCKET_SZ - 1;
-
+		
 		if ((lines[j].info & (ICACHE_ADDR_MASK | ICACHE_USED_MASK)) == (va | ICACHE_USED_MASK))	//found it!
 			lines[j].info = 0;
 	}
@@ -101,11 +100,11 @@ bool icacheFetch(struct icache* ic, uint32_t va, uint_fast8_t sz, bool priviledg
 	uint32_t off = va % ICACHE_LINE_SZ;
 	int_fast16_t i, j, bucket;
 	bool needRead = false;
-
+	
 	va -= off;
-
+	
 	if (va & (sz - 1)) {	//alignment issue
-
+		
 		if (fsrP)
 			*fsrP = 3;
 		return false;
@@ -113,70 +112,70 @@ bool icacheFetch(struct icache* ic, uint32_t va, uint_fast8_t sz, bool priviledg
 
 	bucket = icachePrvHash(va);
 	lines = ic->lines[bucket];
-
+	
 	for (i = 0, j = ic->ptr[bucket]; i < ICACHE_BUCKET_SZ; i++) {
-
+		
 		if (--j == -1)
 			j = ICACHE_BUCKET_SZ - 1;
-
+		
 		if ((lines[j].info & (ICACHE_ADDR_MASK | ICACHE_USED_MASK)) == (va | ICACHE_USED_MASK)) {	//found it!
-
+		
 			if (!priviledged && (lines[j].info & ICACHE_PRIV_MASK)) {	//we found a line but it was cached as priviledged and we are not sure if unpriv can access it
-
+				
 				//attempt a re-read. if it passes, remove priv flag
 				needRead = true;
 			}
-
+			
 			line = &lines[j];
 			break;
 		}
 	}
-
+	
 	if (!line) {
-
+		
 		needRead = true;
-
+		
 		j = ic->ptr[bucket]++;
 		if (ic->ptr[bucket] == ICACHE_BUCKET_SZ)
 			ic->ptr[bucket] = 0;
 		line = lines + j;
 	}
-
+	
 	if (needRead) {
-
+	
 		uint8_t data[ICACHE_LINE_SZ], mappingInfo;
 		uint32_t pa;
-
+	
 		//if we're here, we found nothing - maybe time to populate the cache
-
+		
 		if (!mmuTranslate(ic->mmu, va, priviledged, false, &pa, fsrP, &mappingInfo))
 			return false;
-
+		
 		if (!mmuIsOn(ic->mmu) || !(mappingInfo & MMU_MAPPING_CACHEABLE)) {	//uncacheable mapping or mmu is off - just do the read we were asked to and do not fill the line
-
+			
 			if (!memAccess(ic->mem, pa + off, sz, MEM_ACCESS_TYPE_READ, buf)) {
-
+				
 				if (fsrP)
 					*fsrP = 0x0d;	//perm error
-
+				
 				return false;
 			}
-
+			
 			return true;
 		}
-
+		
 		if (!memAccess(ic->mem, pa, ICACHE_LINE_SZ, MEM_ACCESS_TYPE_READ, data)) {
-
+			
 			if (fsrP)
 				*fsrP = 0x0d;	//perm error
-
+			
 			return false;
 		}
-
+	
 		memcpy(line->data, data, ICACHE_LINE_SZ);
 		line->info = va | (priviledged ? ICACHE_PRIV_MASK : 0) | ICACHE_USED_MASK;
 	}
-
+		
 	if (sz == 4)
 		*(uint32_t*)buf = *(uint32_t*)(line->data + off);
 	else if (sz == 2) {
@@ -193,6 +192,6 @@ bool icacheFetch(struct icache* ic, uint32_t va, uint_fast8_t sz, bool priviledg
 	}
 	else
 		memcpy(buf, line->data + off, sz);
-
+	
 	return priviledged || !(line->info & ICACHE_PRIV_MASK);
 }

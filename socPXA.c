@@ -53,11 +53,14 @@
 #define CPUID_PXA270		0x49265013ul	//stepping C0
 
 
-#define SRAM_BASE	0x5c000000ul
-#define SRAM_SIZE	0x00040000ul
+#define SRAM_BASE			0x5c000000ul
+#define SRAM_SIZE			0x00040000ul
 
-#define ROM_BASE	0x00000000UL
-#define RAM_BASE	0xA0000000UL
+#define ROM_BASE			0x00000000UL
+#define RAM_BASE			0xA0000000UL
+
+#define PXA_I2C_BASE		0x40301680UL
+#define PXA_PWR_I2C_BASE	0x40F00180UL
 
 
 
@@ -75,6 +78,7 @@ struct SoC {
 	
 	struct PxaMemCtrlr *memCtrl;
 	struct PxaPwrClk *pwrClk;
+	struct SocI2c *pwrI2c;
 	struct PxaPwm *pwm[4];
 	struct PxaTimr *tmr;
 	struct PxaMmc *mmc;
@@ -98,7 +102,8 @@ struct SoC {
 	
 	struct ArmRam *sram;
 	struct ArmRam *ram;
-	struct ArmRam *ramMirror;	//mirror
+	struct ArmRam *ramMirror;			//mirror for ram termination
+	struct ArmRom *ramWriteIgnore;		//write ignore for ram termination
 	struct ArmRom *rom;
 	struct ArmMem *mem;
 	struct ArmCpu *cpu;
@@ -140,6 +145,9 @@ static void socUartPrvWrite(uint_fast16_t chr, void* userData)
 struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t romNumPieces, uint32_t sdNumSectors, SdSectorR sdR, SdSectorW sdW, FILE *nandFile, int gdbPort, uint_fast8_t socRev)
 {
 	struct SoC *soc = (struct SoC*)malloc(sizeof(struct SoC));
+	static uint32_t romWriteIgnoreData[64] = {};
+	uint32_t romWriteIgnoreDataSz = sizeof(romWriteIgnoreData);;
+	void *romWriteIgnoreDataPtr = romWriteIgnoreData;
 	struct SocPeriphs sp = {};
 	uint32_t *ramBuffer;
 	
@@ -161,11 +169,29 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->ram)
 		ERR("Cannot init RAM");
 	
-	//ram mirror for rom probe code
-	soc->ramMirror = ramInit(soc->mem, RAM_BASE + deviceGetRamSize(), deviceGetRamSize(), ramBuffer);
-	if (!soc->ramMirror)
-		ERR("Cannot init RAM mirror");
+	switch (deviceGetRamTerminationStyle()) {
+		case RamTerminationMirror:
 	
+			//ram mirror for ram probe code
+			soc->ramMirror = ramInit(soc->mem, RAM_BASE + deviceGetRamSize(), deviceGetRamSize(), ramBuffer);
+			if (!soc->ramMirror)
+				ERR("Cannot init RAM mirror");
+			break;
+		
+		case RamTerminationWriteIgnore:
+			soc->ramWriteIgnore = romInit(soc->mem, RAM_BASE + deviceGetRamSize(), &romWriteIgnoreDataPtr, &romWriteIgnoreDataSz, 1, RomWriteIgnore);
+			if (!soc->ramWriteIgnore)
+				ERR("Cannot init RAM WI arwa");
+			break;
+		
+		case RamTerminationNone:
+			break;
+	
+		default:
+			__builtin_unreachable();
+			break;
+	}
+		
 	soc->rom = romInit(soc->mem, ROM_BASE, romPieces, romPieceSizes, romNumPieces, deviceGetRomMemType());
 	if (!soc->rom)
 		ERR("Cannot init ROM1");
@@ -238,11 +264,17 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	if (!soc->btUart)
 		ERR("Cannot init PXA's BTUART");
 	
-	soc->pwrClk = pxaPwrClkInit(soc->cpu, soc->mem);
+	soc->pwrClk = pxaPwrClkInit(soc->cpu, soc->mem, socRev == 2);
 	if (!soc->pwrClk)
 		ERR("Cannot init PXA's PWRCLKMGR");
 	
-	soc->i2c = socI2cInit(soc->mem, soc->ic, soc->dma);
+	if (socRev == 2) {
+		soc->pwrI2c = socI2cInit(soc->mem, soc->ic, soc->dma, PXA_PWR_I2C_BASE, PXA_I_PWR_I2C);
+		if (!soc->pwrI2c)
+			ERR("Cannot init PXA Pwr's I2C\n");
+	}
+	
+	soc->i2c = socI2cInit(soc->mem, soc->ic, soc->dma, PXA_I2C_BASE, PXA_I_I2C);
 	if (!soc->i2c)
 		ERR("Cannot init PXA's I2C");
 
@@ -350,6 +382,10 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	sp.ssp3 = soc->ssp[2];
 	if (socRev == 2)
 		sp.kpc = soc->kpc;
+	sp.uarts[0] = soc->ffUart;
+	sp.uarts[1] = soc->hwUart;
+	sp.uarts[2] = soc->stUart;
+	sp.uarts[3] = soc->btUart;
 	
 	soc->dev = deviceSetup(&sp, soc->kp, soc->vSD, nandFile);
 	if (!soc->dev)
@@ -416,7 +452,7 @@ void socRun(struct SoC* soc)
 		
 		cycles++;
 		
-		if (!(cycles & 0x00000007UL))
+		if (!(cycles & 0x0000007fUL))
 			pxaTimrTick(soc->tmr);
 		if (!(cycles & 0x000000FFUL)) {
 			for (i = 0; i < 3; i++){
@@ -442,7 +478,7 @@ void socRun(struct SoC* soc)
 	
 		if (!(cycles & 0x0001FFFUL))
 			pxaLcdFrame(soc->lcd);
-		if (!(cycles & 0x00FFFFFFUL))
+		if (!(cycles & 0x03FFFFFFUL))
 			pxaRtcUpdate(soc->rtc);
 		
 		if (!(cycles & 0x00FFFFUL)) {

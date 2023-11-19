@@ -7,13 +7,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-#define ERR(...)							\
-	do {									\
-		fprintf(stderr, __VA_ARGS__);		\
-		abort();							\
-	} while (0)
-
+#ifndef ERR
+	#define ERR(...)							\
+		do {									\
+			fprintf(stderr, __VA_ARGS__);		\
+			abort();							\
+		} while (0)
+#endif
 
 #define __builtin_add_overflow_u32			__builtin_add_overflow
 #define __builtin_add_overflow_i32			__builtin_add_overflow

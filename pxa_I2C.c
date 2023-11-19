@@ -8,7 +8,6 @@
 #include "mem.h"
 
 
-#define PXA_I2C_BASE	0x40301680UL
 #define PXA_I2C_SIZE	0x00000024UL
 
 
@@ -23,6 +22,8 @@
 struct SocI2c {
 	struct SocDma *dma;
 	struct SocIc *ic;
+	uint32_t base;
+	uint32_t irqNo;
 	uint16_t icr;
 	uint16_t isr;
 	uint8_t db;
@@ -74,7 +75,7 @@ static void socI2cPrvRecalcIrq(struct SocI2c *i2c)
 	if (!(i2c->icr & 0x0100))	//ITEIE
 		effectiveIsr &=~ (1 << 6);
 	
-	socIcInt(i2c->ic, PXA_I_I2C, !!effectiveIsr);
+	socIcInt(i2c->ic, i2c->irqNo, !!effectiveIsr);
 }
 
 static uint_fast8_t socI2cPrvAction(struct SocI2c *i2c, enum ActionI2C action, uint8_t param)
@@ -175,7 +176,7 @@ static bool socI2cPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 		return false;
 	}
 	
-	pa = (pa - PXA_I2C_BASE) >> 2;
+	pa = (pa - i2c->base) >> 2;
 	if (pa & 1)
 		return false;
 	pa >>= 1;
@@ -240,7 +241,7 @@ static bool socI2cPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 	return true;
 }
 
-struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDma *dma)
+struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDma *dma, uint32_t base, uint32_t irqNo)
 {
 	struct SocI2c *i2c = (struct SocI2c*)malloc(sizeof(*i2c));
 	
@@ -250,10 +251,12 @@ struct SocI2c* socI2cInit(struct ArmMem *physMem, struct SocIc *ic, struct SocDm
 	memset(i2c, 0, sizeof (*i2c));
 	i2c->dma = dma;
 	i2c->ic = ic;
+	i2c->base = base;
+	i2c->irqNo = irqNo;
 	i2c->isr |= 0x40;	//tx empty
 	
-	if (!memRegionAdd(physMem, PXA_I2C_BASE, PXA_I2C_SIZE, socI2cPrvMemAccessF, i2c))
-		ERR("cannot add I2C to MEM\n");
+	if (!memRegionAdd(physMem, base, PXA_I2C_SIZE, socI2cPrvMemAccessF, i2c))
+		ERR("cannot add I2C to MEM at 0x%08x\n", base);
 	
 	return i2c;
 }

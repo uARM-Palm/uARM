@@ -248,6 +248,11 @@ uint32_t deviceGetRamSize(void)
 	return 17UL << 20;	//it probes over 32M so we say 17M here so that our mirror covers the probe
 }
 
+enum RamTermination deviceGetRamTerminationStyle(void)
+{
+	return RamTerminationMirror;
+}
+
 uint_fast8_t deviceGetSocRev(void)
 {
 	return 0;	//PXA25x

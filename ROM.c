@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "endian.h"
+#include <endian.h>
 #include <stdio.h>
 #include "util.h"
 #include "mem.h"
@@ -13,7 +13,8 @@
 enum StrataFlashMode {
 	StrataFlashNormal,
 	StrataFlashReadStatus,
-	StrataFlashSetReadConfigRegister,
+	StrataFlashSeen0x60,
+	StrataFlashSetSTS,
 	StrataFlashReadID,
 	StrataFlashReadCFI,
 	StrataFlashErzCy1,
@@ -33,14 +34,14 @@ struct ArmRom {
 	struct ArmRomPiece *pieces;
 	enum RomChipType chipType;
 	enum StrataFlashMode mode;
-	uint16_t configReg, busyCy;
+	uint16_t configReg, busyCy, stsReg, possibleConfigReg;
 };
 
 
 static bool romPrvWrite(struct ArmRom *rom, uint32_t ofst, uint_fast16_t val)
 {
 	struct ArmRomPiece *piece = rom->pieces;
-	uint32_t i, now, sz = STRATAFLASH_BLOCK_SIZE;
+	uint32_t i, now;
 	
 	//fprintf(stderr, "SF write of 0x%04x at 0x%08lx\n", (unsigned)val, (unsigned long)ofst);
 	
@@ -52,7 +53,19 @@ static bool romPrvWrite(struct ArmRom *rom, uint32_t ofst, uint_fast16_t val)
 	if (!piece)
 		return false;
 	
-	*(uint16_t*)(((char*)piece->buf) + ofst) &= le16toh(val);
+	switch (rom->chipType) {
+		case RomStrataFlash16x:
+			*(uint16_t*)(((char*)piece->buf) + ofst) &= le16toh(val);
+			break;
+		
+		case RomStrataflash16x2x:
+			*(uint16_t*)(((char*)piece->buf) + ofst + 0) &= le16toh(val);
+			*(uint16_t*)(((char*)piece->buf) + ofst + 2) &= le16toh(val >> 16);
+			break;
+		
+		default:
+			return false;
+	}
 	
 	return true;
 }
@@ -60,7 +73,23 @@ static bool romPrvWrite(struct ArmRom *rom, uint32_t ofst, uint_fast16_t val)
 static bool romPrvErase(struct ArmRom *rom, uint32_t ofst)
 {
 	struct ArmRomPiece *piece = rom->pieces;
-	uint32_t i, now, sz = STRATAFLASH_BLOCK_SIZE;
+	uint32_t i, now, sz;
+
+	switch (rom->chipType) {
+		case RomStrataFlash16x:
+			sz = STRATAFLASH_BLOCK_SIZE;
+			break;
+		
+		case RomStrataflash16x2x:
+			sz = STRATAFLASH_BLOCK_SIZE * 2;
+			break;
+		
+		default:
+			return false;
+	}
+	
+	ofst /= sz;
+	ofst *= sz;
 	
 	fprintf(stderr, "SF erase at 0x%08x\n", ofst);
 	
@@ -95,8 +124,7 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 	struct ArmRomPiece *piece = (struct ArmRomPiece*)userData;
 	uint8_t *addr = (uint8_t*)piece->buf;
 	struct ArmRom *rom = piece->rom;
-	uint32_t cmd, fromStart;
-	bool haveCmd = 0;
+	uint32_t fromStart;
 	
 	fromStart = pa - rom->start;		//flashes care how far we are from start of flash, not of this arbitrary piece of it
 	pa -= piece->base;
@@ -106,6 +134,11 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 	addr += pa;
 	
 	if (write) {
+		
+		uint32_t addrBits, dataBits;
+		bool diffData = false;
+		
+		addrBits = fromStart;
 		
 		switch (rom->chipType) {
 			case RomWriteIgnore:
@@ -117,130 +150,158 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 					fprintf(stderr, "StrataflashX2 command of improper size!\n");
 					return false;
 				}
-				cmd = *(uint32_t*)bufP;
-				if (cmd < 4) // STS commands are weird...
-					cmd &= 0xffff;
-				else if ((cmd & 0xffff) != (cmd >> 16)) {
-					fprintf(stderr, "StrataflashX2 commands differ for flash halves: 0x%08x!\n", cmd);
-					return false;
-				}
-				cmd &= 0xffff;
-				haveCmd = true;
+				dataBits = *(uint32_t*)bufP;
+				
+				diffData = (dataBits & 0xffff) != (dataBits >> 16);
+				dataBits &= 0xffff;
+				addrBits /= 4;
 				break;
 			case RomStrataFlash16x:
 				if (size != 2) {
 					fprintf(stderr, "Strataflash command of improper size!\n");
 					return false;
 				}
-				cmd = *(uint16_t*)bufP;
-				haveCmd = true;
+				dataBits = *(uint16_t*)bufP;
+				addrBits /= 2;
 				break;
 			default:
 				return false;
 		}
 		
-		if (haveCmd) {
 			
-			if (rom->mode == StrataFlashSetReadConfigRegister) {
+		if (rom->mode == StrataFlashSetSTS) {
+			if (diffData)
+				return false;
+			rom->stsReg = dataBits;
+			rom->mode = StrataFlashNormal;
+			return true;
+		}
+		else if (rom->mode == StrataFlashSeen0x60) {
+			
+			if (diffData)
+				return false;
+			
+			if (dataBits == 0x03) {	//set read config reg
 				
-				rom->configReg = cmd;
+				if (rom->possibleConfigReg != addrBits) {
+					
+					fprintf(stderr, "Strataflash READ CONFIG REG SECOND CYCLE SAID 0x%04x, first was 0x%04x!\n", addrBits, rom->possibleConfigReg);
+					return false;
+				}
+				rom->configReg = addrBits;
 				rom->mode = StrataFlashNormal;
 				return true;
 			}
-			else if (rom->mode == StrataFlashWriCy1) {
+			else if (dataBits == 0x01 || dataBits == 0xd0 || dataBits == 0x2f) {
 				
-				if (fromStart != rom->opAddr)
-					return false;
-				if (!romPrvWrite(rom, fromStart, cmd))
-					return false;
-				rom->busyCy = 0x0010;
-				rom->mode = StrataFlashReadStatus;
+				fprintf(stderr, "strataflash block locking not supported\n");
+				rom->mode = StrataFlashNormal;
 				return true;
 			}
-			else switch (cmd & 0xff) {
+			else {
 				
-				case 0x00 ... 0x03:	//STS Settings
-					return true;
-				
-				case 0x50:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//clear status register
-					rom->mode = StrataFlashNormal;
-					return true;
-				
-				case 0x60:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//set read config reg
-					rom->mode = StrataFlashSetReadConfigRegister;
-					return true;
-				
-				case 0x70:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//read status register
-					rom->mode = StrataFlashReadStatus;
-					return true;
-				
-				case 0x20:
-					if (rom->mode != StrataFlashNormal)
-						return false;
-					rom->mode = StrataFlashErzCy1;
-					rom->opAddr = fromStart;
-					return true;
-				
-				case 0x40:
-					if (rom->mode != StrataFlashNormal)
-						return false;
-					rom->mode = StrataFlashWriCy1;
-					rom->opAddr = fromStart;
-					return true;
-				
-				case 0xd0:
-					if (rom->mode != StrataFlashErzCy1)
-						return false;
-					if (fromStart != rom->opAddr)
-						return false;
-					fromStart /= STRATAFLASH_BLOCK_SIZE;
-					fromStart *= STRATAFLASH_BLOCK_SIZE;
-					if (!romPrvErase(rom, fromStart))
-						return false;
-					rom->busyCy = 0x1000;
-					rom->mode = StrataFlashReadStatus;
-					return true;
-				
-				case 0x90:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//read identifier
-					rom->mode = StrataFlashReadID;
-					return true;
-				
-				case 0x98:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//read query CFI
-					rom->mode = StrataFlashReadCFI;
-					return true;
-				
-				case 0xff:
-					if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
-						return false;
-					
-					//read
-					rom->mode = StrataFlashNormal;
-					return true;
-				
-				default:
-					fprintf(stderr, "Unknown strataflash command 0x%04x\n", cmd);
-					return false;
+				//unknown thing
+				return false;
 			}
+		}
+		else if (rom->mode == StrataFlashWriCy1) {	//due to the checks above for dup data, this is unlikely to work for writes to 32-bit-wide dual strata flash
+			
+			if (fromStart != rom->opAddr)
+				return false;
+			if (!romPrvWrite(rom, fromStart, dataBits))
+				return false;
+			rom->busyCy = 0x0010;
+			rom->mode = StrataFlashReadStatus;
+			return true;
+		}
+		else if (diffData) {
+			
+			fprintf(stderr, "strataflash: ignoring write of 0x%08x -> [0x%08x]\n", dataBits, fromStart);
+			return true;
+		}
+		else switch (dataBits & 0xff) {
+			
+			case 0xb8:	//STS
+				rom->mode = StrataFlashSetSTS;
+				return true;
+			
+			case 0x50:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//clear status register
+				rom->mode = StrataFlashNormal;
+				return true;
+			
+			case 0x60:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//set read config reg
+				rom->possibleConfigReg = addrBits;
+				rom->mode = StrataFlashSeen0x60;
+				return true;
+			
+			case 0x70:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//read status register
+				rom->mode = StrataFlashReadStatus;
+				return true;
+			
+			case 0x20:
+				if (rom->mode != StrataFlashNormal)
+					return false;
+				rom->mode = StrataFlashErzCy1;
+				rom->opAddr = fromStart;
+				return true;
+			
+			case 0x40:
+				if (rom->mode != StrataFlashNormal)
+					return false;
+				rom->mode = StrataFlashWriCy1;
+				rom->opAddr = fromStart;
+				return true;
+			
+			case 0xd0:
+				if (rom->mode != StrataFlashErzCy1)
+					return false;
+				if (fromStart != rom->opAddr)
+					return false;
+				if (!romPrvErase(rom, fromStart))
+					return false;
+				rom->busyCy = 0x1000;
+				rom->mode = StrataFlashReadStatus;
+				return true;
+			
+			case 0x90:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//read identifier
+				rom->mode = StrataFlashReadID;
+				return true;
+			
+			case 0x98:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//read query CFI
+				rom->mode = StrataFlashReadCFI;
+				return true;
+			
+			case 0xff:
+				if (rom->mode == StrataFlashErzCy1 || rom->mode == StrataFlashWriCy1)
+					return false;
+				
+				//read
+				rom->mode = StrataFlashNormal;
+				return true;
+			
+			default:
+				fprintf(stderr, "Unknown strataflash command 0x%04x -> [0x%08x]\n", dataBits, addrBits);
+				return false;
 		}
 		switch (size) {
 			
@@ -308,7 +369,7 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 				break;
 			
 			case StrataFlashNormal:
-			case StrataFlashSetReadConfigRegister:	//in this mode we can still fetch
+			case StrataFlashSeen0x60:	//in this mode we can still fetch
 				break;
 			
 			default:
@@ -348,7 +409,7 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 							reply = 2;
 							break;
 						
-						case 0x81:	//protection registers (uniq ID by intel and by manuf) copied frpom same chip as this rom
+						case 0x81:	//protection registers (uniq ID by intel and by manuf) copied from same chip as this rom
 							reply = 0x001d0017ul;
 							skipdup = true;
 							break;
@@ -372,17 +433,19 @@ static bool romAccessF(void* userData, uint32_t pa, uint_fast8_t size, bool writ
 							reply = 0xffff;
 							break;
 
-						case 0x89:	//otp lock - all locked fo rus
+						case 0x89:	//otp lock - all locked for us
 							reply = 0;
 							break;
 						case 0x8a ... 0x109:	//otp data
 							reply = 0;
 							break;
 						default:
-							switch (fromStart & 0x7fff) {
+							fromStart %= 0x8000;
+							
+							switch (fromStart) {
 								case 0:		//id?
-									reply = 0x80;
-									fprintf(stderr, "strataflash weird read of 0x%08x in ID mode returns 0x%04x\n", fromStart, reply);
+									reply = 0x89;
+									fprintf(stderr, "strataflash weird read of 0x%08x in ID mode returns 0x%04x\n", fromStart , reply);
 									break;
 								case 2:		//block lock/lockdown
 									reply = 0;
@@ -537,7 +600,7 @@ struct ArmRom* romInit(struct ArmMem *mem, uint32_t adr, void **pieces, const ui
 	
 	rom->chipType = chipType;
 	rom->mode = StrataFlashNormal;
-	rom->configReg = 0xffc7;
+	rom->configReg = 0xc0c2;
 	
 	return rom;
 }

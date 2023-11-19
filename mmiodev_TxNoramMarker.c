@@ -1,6 +1,6 @@
 //(c) uARM project    https://github.com/uARM-Palm/uARM    uARM@dmitry.gr
 
-#include "mmiodev_TxNoramMarker.h"
+#include "mmiodev_TxNoRamMarker.h"
 #include <string.h>
 #include <stdlib.h>
 #include "util.h"
