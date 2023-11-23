@@ -94,6 +94,8 @@ Examples:
     ./uARM -r TX.NOR.bin -n TX.NAND.bin                   # Boot T|X
     ./uARM -r TE2.NOR.bin -n TE2.NAND.bin -s sdcard.img   # Boot T|E with an sd card
 ```
+ 
+ The black area of the window is the simulated silkscreen of the device that is being emulated.
 
 ### Tested images
 ```
