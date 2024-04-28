@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "icache.h"
 #include "util.h"
+#include "endian.h"
 #include "CPU.h"
 
 
