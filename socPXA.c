@@ -452,7 +452,7 @@ void socRun(struct SoC* soc)
 		
 		cycles++;
 		
-		if (!(cycles & 0x0000007fUL))
+		if (!(cycles & 0x00000007UL))
 			pxaTimrTick(soc->tmr);
 		if (!(cycles & 0x000000FFUL)) {
 			for (i = 0; i < 3; i++){
