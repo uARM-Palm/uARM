@@ -16,7 +16,7 @@
 #define LCD_STATE_DMA_0_START	1
 #define LCD_STATE_DMA_0_END		2
 
-#define UNMASKABLE_INTS			0x7C8E
+#define UNMASKABLE_INTS			0x7C0C	//BER, ABC and PXA27x-only status bits; SOF/QD/LDD/EOF/BS/OU/IU have masks in LCCR0
 
 
 struct PxaLcd {
@@ -77,20 +77,24 @@ static bool pxaLcdPrvMemAccessF(void* userData, uint32_t pa, uint_fast8_t size, 
 					lcd->enbChanged = 1;
 				
 				lcd->lccr0 = val;
-				//recalc intMask
+				//recalc intMask (set of LCSR bits that raise an interrupt).
+				//LCCR0 mask bits are "1 = masked" (PXA25x/26x/27x): LDM(3)->LDD, SFM(4)->SOF, IUM(5)->IUL|IUU,
+				//EFM(6)->EOF, QDM(11)->QD, BM(20)->BS, OUM(21)->OU
 				v16 = UNMASKABLE_INTS;
-				if (val & 0x00200000UL)		//output fifo underrun
+				if (!(val & 0x00200000UL))	//output fifo underrun
 					v16 |= 0x0040;
-				if (val & 0x00100000UL)		//branch int
+				if (!(val & 0x00100000UL))	//branch status
 					v16 |= 0x0200;
-				if (val & 0x00000800UL)		//quick disable
-					v16 |= 0x0001;
-				if (val & 0x00000040UL)		//end of frame
+				if (!(val & 0x00000800UL))	//quick disable
 					v16 |= 0x0080;
-				if (val & 0x00000020UL)		//input fifo underrun
+				if (!(val & 0x00000040UL))	//end of frame
+					v16 |= 0x0100;
+				if (!(val & 0x00000020UL))	//input fifo underrun
 					v16 |= 0x0030;
-				if (val & 0x00000010UL)		//start of frame
+				if (!(val & 0x00000010UL))	//start of frame
 					v16 |= 0x0002;
+				if (!(val & 0x00000008UL))	//lcd disable done
+					v16 |= 0x0001;
 				lcd->intMask = v16;
 				pxaLcdPrvUpdateInts(lcd);
 				break;

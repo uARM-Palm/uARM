@@ -243,7 +243,7 @@ bool nandWrite(struct NAND* nand, bool cle, bool ale, uint8_t val)
 			
 			default:
 				fprintf(stderr, "unknown command 0x%02x. halt.\n", val);
-				while(1);
+				abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 		}
 	}
 	else if (!cle && ale) {	//addr

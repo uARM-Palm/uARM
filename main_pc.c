@@ -24,10 +24,14 @@ static FILE* mSdCard = NULL;
 
 int socExtSerialReadChar(void)
 {
+	static bool stdinClosed = false;	//after EOF or an error there is nothing more to read; stop polling
 	struct timeval tv;
 	fd_set set;
 	char c;
 	int i, ret = CHAR_NONE;
+	
+	if (stdinClosed)
+		return CHAR_NONE;
 	
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
@@ -36,9 +40,15 @@ int socExtSerialReadChar(void)
 	FD_SET(0, &set);
 	
 	i = select(1, &set, NULL, NULL, &tv);
-	if(i == 1 && 1 == read(0, &c, 1)){
+	if (i < 0)
+		stdinClosed = true;
+	else if (i == 1) {
+		ssize_t got = read(0, &c, 1);
 		
-		ret = c;
+		if (got == 1)
+			ret = c;
+		else		//EOF (e.g. stdin redirected from /dev/null) or read error
+			stdinClosed = true;
 	}
 
 	return ret;

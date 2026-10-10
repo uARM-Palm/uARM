@@ -2131,7 +2131,7 @@ static void cpuPrvCycleThumb(struct ArmCpu *cpu) {
 						//this will not handle "BLX LR"
 						if (instrT == 0x47f0) {
 							fprintf(stderr, "very unlikely\n");
-							while (1);
+							abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 						}
 						
 						if (instrT & 0x80)	//BLX

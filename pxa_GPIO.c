@@ -42,7 +42,7 @@ static void socGpioPrvRecalcValues(struct SocGpio *gpio, uint_fast8_t which)
 	if (which >= 4) {
 		
 		fprintf(stderr, "gpio overflow. halt\n");
-		while(1);
+		abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 	}
 	
 	val = gpio->dirs[which];

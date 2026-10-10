@@ -549,7 +549,7 @@ static uint_fast16_t tsc210xPrvSspClientProc(void* userData, uint_fast8_t nBits,
 		if (fail) {
 			
 			fprintf(stderr, "halt for now\n");
-			while(1);
+			abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 		}
 		
 		return ret;
@@ -816,7 +816,7 @@ static uint_fast16_t tsc210xPrvSspClientProc(void* userData, uint_fast8_t nBits,
 		}
 		
 		fprintf(stderr, "halt for now\n");
-		while(1);
+		abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 	}
 	
 	return 0;
@@ -1025,7 +1025,7 @@ void tsc210xPeriodic(struct Tsc210x *tsc)
 		case 9:
 			//not sure
 			fprintf(stderr, "not sure how this mode works. halt\n");
-			while(1);
+			abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 			break;
 		
 		case 10:

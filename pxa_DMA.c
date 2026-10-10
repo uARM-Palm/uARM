@@ -179,7 +179,7 @@ static bool socDmaPrvChannelDoBurst(struct SocDma* dma, uint_fast8_t channel)		/
 		
 		fprintf(stderr, "DMA is on but WIDTH is misprogrammed\n");
 		//this should never happen and is unpredictable on real HW. halt to allow debug
-		while(1);
+		abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 	}
 	
 	//we never transfer more than there is left
@@ -190,7 +190,7 @@ static bool socDmaPrvChannelDoBurst(struct SocDma* dma, uint_fast8_t channel)		/
 		
 		fprintf(stderr, "cannot xfer %u bytes using %u-byte piece. Halting\n", (unsigned)num, (unsigned)each);
 		//this should never happen and is unpredictable on real HW. halt to allow debug
-		while(1);
+		abort();	//fatal emulation error (message printed above); stop instead of spinning at 100 % CPU
 	}
 	
 	num /= each;	//convert from bytes to transfers
