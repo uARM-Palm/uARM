@@ -52,7 +52,7 @@ struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD 
 	if (!dev->tsc2101)
 		ERR("Cannot init TSC2101");
 	
-	dev->tps65010 = tps65010Init(sp->i2c);
+	dev->tps65010 = tps65010Init(sp->i2c, sp->gpio, 14);	//TPS65010 nINT -> GPIO 14 (enabled as falling-edge wake source by the OS)
 	if (!dev->tps65010)
 		ERR("Cannot init TPS65010");
 		
@@ -67,7 +67,7 @@ struct Device* deviceSetup(struct SocPeriphs *sp, struct Keypad *kp, struct VSD 
 	socGpioSetState(sp->gpio, 2, !vsd);				//card in? (PXA gpio to check this)
 	socGpioSetState(sp->gpio, 3, true);				//slider open
 	socGpioSetState(sp->gpio, 12, true);			//hotsync button
-	socGpioSetState(sp->gpio, 14, true);			//TPS int?
+	//GPIO 14 (TPS65010 nINT) is driven by the TPS65010 model
 	
 	//full battery
 	tsc210xSetExtAdc(dev->tsc2101, TscExternalAdcBat1, 4100);
@@ -137,5 +137,6 @@ void deviceTouch(struct Device *dev, int x, int y)
 
 void deviceKey(struct Device *dev, uint32_t key, bool down)
 {
-	//nothing
+	if (key == SDLK_ESCAPE)		//power button, wired to the TPS65010 on/off input
+		tps65010SetPowerButton(dev->tps65010, down);
 }

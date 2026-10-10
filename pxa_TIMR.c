@@ -148,6 +148,32 @@ struct PxaTimr* pxaTimrInit(struct ArmMem *physMem, struct SocIc *ic)
 	return timr;
 }
 
+void pxaTimrAdvance(struct PxaTimr *timr, uint32_t ticks)
+{
+	uint32_t start = timr->OSCR;
+	uint_fast8_t i;
+	
+	if (!ticks)
+		return;
+	
+	timr->OSCR += ticks;
+	
+	for (i = 0; i < 4; i++) {
+		uint_fast8_t v = 1UL << i;
+		
+		if (timr->OSMR[i] - start - 1 < ticks) {		//OSCR passed through OSMR[i] (wraparound-safe)
+			
+			if (i == 3 && timr->OWER)
+				ERR("WDT fires\n");
+			
+			if (timr->OIER & v)
+				timr->OSSR |= v;
+		}
+	}
+	
+	pxaTimrPrvRaiseLowerInts(timr);
+}
+
 void pxaTimrTick(struct PxaTimr *timr)
 {
 	timr->OSCR++;

@@ -28,7 +28,7 @@ void pxaRtcPrvUpdate(struct PxaRtc *rtc)
 {
 	if (rtc->lastSeenTime != rtc->RCNR) {	//do not triger alarm more than once per second please
 		
-		if (rtc->RTSR & 0x4)				//check alarm
+		if ((rtc->RTSR & 0x4) && rtc->RCNR == rtc->RTAR)	//ALE set and the counter reached the alarm time: AL
 			rtc->RTSR |= 1;
 		
 		if (rtc->RTSR & 0x8)				//send HZ interrupt

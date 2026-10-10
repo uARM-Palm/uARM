@@ -32,6 +32,9 @@ struct SocGpio {
 	
 	GpioDirsChangedF dirNotifF;
 	void *dirNotifD;
+	
+	GpioEdgeF edgeF;
+	void *edgeD;
 };
 
 static void socGpioPrvRecalcValues(struct SocGpio *gpio, uint_fast8_t which)
@@ -94,6 +97,17 @@ static void socGpioPrvRecalcValues(struct SocGpio *gpio, uint_fast8_t which)
 		uint32_t wentLo = oldVal &~ newVal;
 		
 		gpio->detStatus[which] |= (wentHi & gpio->riseDet[which]) | (wentLo & gpio->fallDet[which]);
+		
+		if (gpio->edgeF) {
+			uint32_t chg = newVal ^ oldVal;
+			
+			while (chg) {
+				uint32_t b = 31 - __builtin_clz(chg);
+				
+				chg &=~ (1UL << b);
+				gpio->edgeF(gpio->edgeD, which * 32 + b, !!(newVal & (1UL << b)));
+			}
+		}
 	}
 }
 
@@ -389,6 +403,12 @@ void socGpioSetNotif (struct SocGpio *gpio, uint_fast8_t gpioNum, GpioChangedNot
 	
 	gpio->notifF[gpioNum] = notifF;
 	gpio->notifD[gpioNum] = userData;
+}
+
+void socGpioSetEdgeNotif(struct SocGpio *gpio, GpioEdgeF edgeF, void *userData)
+{
+	gpio->edgeF = edgeF;
+	gpio->edgeD = userData;
 }
 
 void socGpioSetDirsChangedNotif (struct SocGpio *gpio, GpioDirsChangedF notifF, void *userData)

@@ -37,6 +37,9 @@ void socGpioSetState(struct SocGpio* gpio, uint_fast8_t gpioNum, bool on);	//we 
 void socGpioSetNotif(struct SocGpio* gpio, uint_fast8_t gpioNum, GpioChangedNotifF notifF, void* userData);	//one per pin. set ot NULL to disable
 
 //for all (but only one notifier)
+typedef void (*GpioEdgeF)(void *userData, uint32_t gpioNum, bool rising);
+void socGpioSetEdgeNotif(struct SocGpio *gpio, GpioEdgeF edgeF, void *userData);	//called for every level change seen by the SoC
+
 void socGpioSetDirsChangedNotif(struct SocGpio* gpio, GpioDirsChangedF notifF, void *userData);
 
 

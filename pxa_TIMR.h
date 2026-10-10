@@ -14,6 +14,7 @@ struct PxaTimr;
 
 struct PxaTimr* pxaTimrInit(struct ArmMem *physMem, struct SocIc *ic);
 void pxaTimrTick(struct PxaTimr* timr);
+void pxaTimrAdvance(struct PxaTimr* timr, uint32_t ticks);		//same as calling pxaTimrTick() "ticks" times, but in O(1)
 
 
 #endif

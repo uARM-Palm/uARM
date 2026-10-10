@@ -20,8 +20,61 @@ struct PxaPwrClk {
 	uint32_t PMCR, PSSR, PSPR, PWER, PRER, PFER, PEDR, PCFR, PGSR[4], RCSR, PMFW;
 	//power mgr 270 only
 	uint32_t PSTR, PVCR, PUCR, PKWR, PKSR, PCMD[32];
-	bool turbo, isPXA270;
+	bool turbo, isPXA270, sleeping, idle;
 };
+
+static void pxaPwrClkPrvWake(struct PxaPwrClk *pc)
+{
+	pc->sleeping = false;
+	pc->idle = false;
+	pc->RCSR |= 4;			//SMR: sleep mode reset
+	pc->PSSR |= 0x31;		//SSS (software sleep), PH (peripheral hold), RDH (read disable hold)
+	cpuReset(pc->cpu, 0);
+}
+
+bool pxaPwrClkIsSleeping(struct PxaPwrClk *pc)
+{
+	return pc->sleeping;
+}
+
+bool pxaPwrClkIsIdle(struct PxaPwrClk *pc)
+{
+	return pc->idle;
+}
+
+void pxaPwrClkEndIdle(struct PxaPwrClk *pc)
+{
+	pc->idle = false;
+}
+
+void pxaPwrClkRtcAlarm(struct PxaPwrClk *pc)
+{
+	if (pc->sleeping && (pc->PWER & 0x80000000UL)) {
+		fprintf(stderr, "RESUMING (wakeup from RTC alarm)\n");
+		pxaPwrClkPrvWake(pc);
+	}
+}
+
+void pxaPwrClkGpioEdge(void *userData, uint32_t gpioNum, bool rising)
+{
+	struct PxaPwrClk *pc = (struct PxaPwrClk*)userData;
+	uint32_t bit;
+	
+	if (gpioNum >= 16 || pc->isPXA270)		//PXA25x/26x: GPIO 0..15 can wake the chip (PXA27x wake logic is not modeled)
+		return;
+	
+	bit = 1UL << gpioNum;
+	if (!(pc->PWER & bit) || !((rising ? pc->PRER : pc->PFER) & bit))
+		return;
+	
+	pc->PEDR |= bit;
+	
+	if (pc->sleeping) {
+		
+		fprintf(stderr, "RESUMING (wakeup from GPIO %u %s edge)\n", (unsigned)gpioNum, rising ? "rising" : "falling");
+		pxaPwrClkPrvWake(pc);
+	}
+}
 
 
 static bool pxaPwrClkPrvCoproc7regXferFunc(struct ArmCpu *cpu, void* userData, bool two, bool read, uint8_t op1, uint8_t Rx, uint8_t CRn, uint8_t CRm, uint8_t op2)
@@ -66,10 +119,17 @@ static bool pxaPwrClkPrvCoproc14regXferFunc(struct ArmCpu *cpu, void* userData, 
 					val = 0;
 				else if (val == 1 && op2 == 0) {
 					
-					//idle
+					pc->idle = true;		//idle: the core stops until an interrupt unmasked in ICMR is pending
+				}
+				else if (val == 3 && op2 == 0 && !pc->isPXA270) {
+					
+					//PXA25x/26x sleep: the CPU stops until a wake source enabled in PWER sees the configured edge (see pxaPwrClkGpioEdge)
+					fprintf(stderr, "SLEEPING (PWER=0x%08lx PRER=0x%08lx PFER=0x%08lx)\n", (unsigned long)pc->PWER, (unsigned long)pc->PRER, (unsigned long)pc->PFER);
+					pc->sleeping = true;
 				}
 				else if (val == 3 && op2 == 0) {
 					
+					//PXA27x wake sources (PKWR etc.) are not modeled; keep the interactive behaviour
 					fprintf(stderr, "SLEEPING. PRESS A KEY HERE TO RESUME (we'll pick a reason for you)\n");
 					getchar();
 					fprintf(stderr, "RESUMING\n");

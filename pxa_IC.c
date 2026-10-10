@@ -328,6 +328,16 @@ struct SocIc* socIcInit(struct ArmCpu *cpu, struct ArmMem *physMem, uint_fast8_t
 	return ic;
 }
 
+bool socIcAnyUnmaskedPending(struct SocIc *ic)
+{
+	return ic->wasIrq || ic->wasFiq;
+}
+
+bool socIcIsRaised(struct SocIc *ic, uint_fast8_t intNum)
+{
+	return !!(ic->ICPR[intNum / 32] & (1UL << (intNum % 32)));
+}
+
 void socIcInt(struct SocIc *ic, uint_fast8_t intNum, bool raise)		//interrupt caused by emulated hardware
 {
 	uint32_t old = ic->ICPR[intNum / 32];

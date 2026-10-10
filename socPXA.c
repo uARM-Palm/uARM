@@ -267,6 +267,7 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	soc->pwrClk = pxaPwrClkInit(soc->cpu, soc->mem, socRev == 2);
 	if (!soc->pwrClk)
 		ERR("Cannot init PXA's PWRCLKMGR");
+	socGpioSetEdgeNotif(soc->gpio, pxaPwrClkGpioEdge, soc->pwrClk);	//sleep wakeups
 	
 	if (socRev == 2) {
 		soc->pwrI2c = socI2cInit(soc->mem, soc->ic, soc->dma, PXA_PWR_I2C_BASE, PXA_I_PWR_I2C);
@@ -443,16 +444,43 @@ struct SoC* socInit(void **romPieces, const uint32_t *romPieceSizes, uint32_t ro
 	return soc;
 }
 
+//guest time base: the OS timer ticks every 8 emulated cycles and runs at 3.6864 MHz on real hardware
+#define SOC_CYCLES_PER_SECOND	(3686400ull * 8)
+#define SOC_MAX_AHEAD_US		50000ull		//while the CPU runs, guest time may run ahead of real time by at most this much
+#define SOC_MAX_BEHIND_US		100000ull		//never try to catch up more than this (avoids bursts after the host was busy)
+
+static uint64_t socPrvHostUs(void)
+{
+	return SDL_GetPerformanceCounter() * 1000000ull / SDL_GetPerformanceFrequency();
+}
+
 void socRun(struct SoC* soc)
 {
 	uint32_t cycles = 0;
 	uint_fast8_t i;
+	uint64_t paceBaseUs = socPrvHostUs(), paceCycles = 0;
+	int64_t rtcCountdown = SOC_CYCLES_PER_SECOND;
+	bool coreStopped = false, rtcAlarmWasRaised = false;
 	
 	while (1) {	
 		
-		cycles++;
+		//while the core is stopped only peripherals advance, in aligned steps. In idle: 256 cycles (every periodic action
+		//below uses a mask of at least 0xff, so the same calls happen). In sleep the peripherals are powered down on real
+		//hardware and only the RTC and the wake GPIOs matter: 64K cycles per step (0xffff-masked actions still run each step).
+		uint32_t step = 1;
 		
-		if (!(cycles & 0x00000007UL))
+		if (coreStopped) {
+			if (pxaPwrClkIsSleeping(soc->pwrClk) && !(cycles & 0xffffUL))
+				step = 0x10000;
+			else if (!(cycles & 0xffUL))
+				step = 0x100;
+		}
+		
+		cycles += step;
+		
+		if (step > 1)
+			pxaTimrAdvance(soc->tmr, step / 8);
+		else if (!(cycles & 0x00000007UL))
 			pxaTimrTick(soc->tmr);
 		if (!(cycles & 0x000000FFUL)) {
 			for (i = 0; i < 3; i++){
@@ -476,10 +504,27 @@ void socRun(struct SoC* soc)
 		
 		devicePeriodic(soc->dev, cycles);
 	
-		if (!(cycles & 0x0001FFFUL))
+		if (!(cycles & 0x0003FFFFUL))			//two calls per frame: ~56 frames per second of guest time
 			pxaLcdFrame(soc->lcd);
-		if (!(cycles & 0x03FFFFFFUL))
+		
+		rtcCountdown -= step;
+		if (rtcCountdown <= 0) {						//RTC counts seconds of guest time
+			rtcCountdown += SOC_CYCLES_PER_SECOND;
 			pxaRtcUpdate(soc->rtc);
+		}
+		
+		//real-time pacing: while the core does not execute (idle/sleep), wait for real time to catch up with guest time
+		paceCycles += step;
+		if (!(cycles & (coreStopped ? 0x0003FFFFUL : 0x00003FFFUL))) {	//~9 ms of guest time per check while stopped, ~0.5 ms while running
+			uint64_t guestUs = paceCycles * 1000000ull / SOC_CYCLES_PER_SECOND, hostUs = socPrvHostUs() - paceBaseUs;
+			
+			if (hostUs > guestUs + SOC_MAX_BEHIND_US || (!coreStopped && guestUs > hostUs + SOC_MAX_AHEAD_US)) {
+				paceBaseUs = socPrvHostUs();		//rebase instead of bursting or stalling
+				paceCycles = 0;
+			}
+			else if (coreStopped && guestUs > hostUs + 1000)
+				SDL_Delay((uint32_t)((guestUs - hostUs) / 1000));
+		}
 		
 		if (!(cycles & 0x00FFFFUL)) {
 			
@@ -525,7 +570,22 @@ void socRun(struct SoC* soc)
 			}
 		}
 		
-		cpuCycle(soc->cpu);
+		if (pxaPwrClkIsSleeping(soc->pwrClk)) {
+			bool rtcAlarm = socIcIsRaised(soc->ic, PXA_I_RTC_ALM);
+			
+			if (rtcAlarm && !rtcAlarmWasRaised)		//a new alarm event wakes; one left pending from before sleep does not
+				pxaPwrClkRtcAlarm(soc->pwrClk);
+			rtcAlarmWasRaised = rtcAlarm;
+		}
+		else {
+			rtcAlarmWasRaised = socIcIsRaised(soc->ic, PXA_I_RTC_ALM);
+			
+			if (!pxaPwrClkIsIdle(soc->pwrClk) || socIcAnyUnmaskedPending(soc->ic)) {
+				pxaPwrClkEndIdle(soc->pwrClk);
+				cpuCycle(soc->cpu);
+			}
+		}
+		coreStopped = pxaPwrClkIsSleeping(soc->pwrClk) || (pxaPwrClkIsIdle(soc->pwrClk) && !socIcAnyUnmaskedPending(soc->ic));
 	}
 }
 
